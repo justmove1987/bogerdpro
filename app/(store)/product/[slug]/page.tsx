@@ -1,15 +1,59 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { CheckCircle2 } from "lucide-react";
-import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { ProductPurchasePanel } from "@/components/cart/product-purchase-panel";
 import { ProductCard } from "@/components/catalog/product-card";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { JsonLd } from "@/components/seo/json-ld";
 import { formatPriceRange } from "@/lib/catalog/format";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/queries";
+import { absoluteUrl, siteName } from "@/lib/seo/site";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+function productDescription(product: Awaited<ReturnType<typeof getProductBySlug>>) {
+  if (!product) return "";
+  return product.description?.slice(0, 155) || `${product.name} de ${product.brand?.name ?? siteName}. Vestuario laboral y EPI profesional.`;
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+
+  if (!product) {
+    return {
+      title: "Producto no encontrado",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const image = product.images[0]?.url ?? "/images/products/workwear-chaleco-casco.jpg";
+  const description = productDescription(product);
+
+  return {
+    title: product.name,
+    description,
+    alternates: {
+      canonical: `/product/${product.slug}`,
+    },
+    openGraph: {
+      type: "website",
+      title: `${product.name} | ${siteName}`,
+      description,
+      url: absoluteUrl(`/product/${product.slug}`),
+      images: [{ url: absoluteUrl(image), alt: product.images[0]?.alt ?? product.name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: [absoluteUrl(image)],
+    },
+  };
+}
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
@@ -22,8 +66,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const relatedProducts = await getRelatedProducts(product);
   const mainImage = product.images[0];
   const totalStock = product.variants.reduce((total, variant) => total + variant.stock, 0);
-  const colors = [...new Set(product.variants.flatMap((variant) => (variant.color ? [variant.color] : [])))];
-  const sizes = [...new Set(product.variants.flatMap((variant) => (variant.size ? [variant.size] : [])))];
+  const firstVariant = product.variants[0];
   const attributes = product.attributeValues.reduce<Record<string, string[]>>((groups, item) => {
     const name = item.attributeValue.attribute.name;
     groups[name] = [...(groups[name] ?? []), item.attributeValue.value];
@@ -32,6 +75,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          sku: product.sku ?? firstVariant?.sku,
+          brand: product.brand ? { "@type": "Brand", name: product.brand.name } : undefined,
+          category: product.category?.name,
+          description: productDescription(product),
+          image: product.images.map((image) => absoluteUrl(image.url)),
+          offers: firstVariant
+            ? {
+                "@type": "Offer",
+                priceCurrency: firstVariant.currency,
+                price: (firstVariant.priceCents / 100).toFixed(2),
+                availability: totalStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                url: absoluteUrl(`/product/${product.slug}`),
+              }
+            : undefined,
+        }}
+      />
       <Breadcrumbs
         items={[
           { href: "/", label: "Inicio" },
@@ -74,44 +138,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
           <p className="mt-6 max-w-2xl text-base leading-8 text-[#62615d]">{product.description}</p>
 
-          <div className="mt-8 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-[#62615d]">Precio profesional desde</p>
-                <p className="mt-1 text-3xl font-bold tracking-tight">
-                  {formatPriceRange(product.minPriceCents, product.maxPriceCents, product.variants[0]?.currency)}
-                </p>
-              </div>
-              <AddToCartButton productSlug={product.slug} />
-            </div>
+          <ProductPurchasePanel
+            product={{
+              slug: product.slug,
+              name: product.name,
+              sku: product.sku,
+              image: mainImage?.url ?? "/images/products/workwear-chaleco-casco.jpg",
+            }}
+            variants={product.variants.map((variant) => ({
+              id: variant.id,
+              sku: variant.sku,
+              color: variant.color,
+              size: variant.size,
+              priceCents: variant.priceCents,
+              currency: variant.currency,
+              stock: variant.stock,
+            }))}
+          />
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {colors.length ? (
-                <div>
-                  <p className="text-sm font-semibold">Colores</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {colors.map((color) => (
-                      <span key={color} className="rounded-full border border-[#d8d1c5] bg-[#f7f5f0] px-3 py-1 text-sm text-[#62615d]">
-                        {color}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {sizes.length ? (
-                <div>
-                  <p className="text-sm font-semibold">Tallas</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {sizes.map((size) => (
-                      <span key={size} className="rounded-full border border-[#d8d1c5] bg-[#f7f5f0] px-3 py-1 text-sm text-[#62615d]">
-                        {size}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
+          <div className="mt-6 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
             <div className="mt-6 overflow-hidden rounded-[var(--radius-sm)] border border-[#e7e2d8]">
               <table className="w-full text-left text-sm">
                 <thead className="bg-[#f7f5f0] text-[#62615d]">

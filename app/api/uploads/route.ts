@@ -12,7 +12,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "El archivo es obligatorio." }, { status: 400 });
   }
 
-  const url = await saveLocalUpload(file);
-
-  return NextResponse.json({ url });
+  try {
+    const url = await saveLocalUpload(file);
+    return NextResponse.json({ url });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "No se ha podido subir el archivo." }, { status: 400 });
+  }
 }

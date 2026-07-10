@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, Menu, Search, ShoppingCart, UserRound, X } from "lucide-react";
+import { ChevronDown, Menu, ShoppingCart, UserRound, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Button } from "@/components/ui/button";
 import { catalogCollections } from "@/config/site-content";
 import { locales } from "@/config/i18n";
+import { useCart } from "@/components/cart/cart-provider";
 
 const menuCollections = catalogCollections;
 
@@ -16,6 +16,7 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const { data: session } = useSession();
+  const { count } = useCart();
   const isAdmin = session?.user?.role === "ADMIN";
 
   return (
@@ -94,10 +95,6 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link href="/catalog" className="premium-focus inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-3 text-sm font-medium text-[#62615d] transition hover:border-[#151515] hover:text-[#151515]">
-            <Search size={17} />
-            Buscar producto
-          </Link>
           <div className="flex items-center rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white p-1" aria-label="Selector de idioma">
             {locales.map((locale) => (
               <span
@@ -111,13 +108,9 @@ export function Header() {
           </div>
           <Link href="/cart" aria-label="Carrito" className="premium-focus relative rounded-[var(--radius-sm)] p-2 transition hover:bg-white">
             <ShoppingCart size={20} />
-            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white">0</span>
+            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white">{count}</span>
           </Link>
-          <Link
-            href={isAdmin ? "/admin" : "/admin/login"}
-            aria-label={isAdmin ? "Panel de administracion" : "Iniciar sesion"}
-            className="premium-focus rounded-[var(--radius-sm)] p-2 transition hover:bg-white"
-          >
+          <Link href={session?.user ? "/cuenta" : "/login"} aria-label={session?.user ? "Mi cuenta" : "Iniciar sesion"} className="premium-focus rounded-[var(--radius-sm)] p-2 transition hover:bg-white">
             <UserRound size={20} />
           </Link>
         </div>
@@ -146,15 +139,14 @@ export function Header() {
             <Link href="/contacto" className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
               Contacto
             </Link>
+            <Link href={session?.user ? "/cuenta" : "/login"} className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
+              {session?.user ? "Mi cuenta" : "Iniciar sesión"}
+            </Link>
             {isAdmin ? (
               <Link href="/admin" className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
                 Admin
               </Link>
             ) : null}
-            <Button variant="primary" size="lg" className="mt-2 w-full">
-              <Search size={17} />
-              Buscar producto
-            </Button>
           </div>
         </motion.div>
       ) : null}

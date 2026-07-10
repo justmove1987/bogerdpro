@@ -220,14 +220,16 @@ export async function deleteBrand(formData: FormData) {
 
 export async function updateOrderStatus(formData: FormData) {
   await requireAdmin();
+  const id = formString(formData, "id");
   await prisma.order.update({
-    where: { id: formString(formData, "id") },
+    where: { id },
     data: {
       status: formString(formData, "status") as never,
       paymentStatus: formString(formData, "paymentStatus") as never,
     },
   });
   revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${id}`);
 }
 
 export { centsToEuros };

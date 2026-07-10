@@ -1,12 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 import { DownloadableCatalogs } from "@/components/catalog/downloadable-catalogs";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { catalogCollections } from "@/config/site-content";
+import { absoluteUrl, siteName } from "@/lib/seo/site";
 
-export const metadata = {
-  title: "Catálogos",
+export const metadata: Metadata = {
+  title: "Catálogos de vestuario laboral y EPI",
+  description:
+    "Descarga catálogos profesionales por marca, sector y tipo de producto: alta visibilidad, calzado, protección, hostelería, sanidad e industria.",
+  alternates: { canonical: "/catalog" },
+  openGraph: {
+    title: `Catálogos de vestuario laboral y EPI | ${siteName}`,
+    description: "Colecciones profesionales de BogerdPro para encontrar vestuario laboral y equipos de protección por categoría.",
+    url: absoluteUrl("/catalog"),
+    images: [{ url: absoluteUrl("/images/catalogs/alta-visibilidad-equipo.jpg"), alt: "Catálogos BogerdPro" }],
+  },
 };
 
 export default function CatalogPage() {

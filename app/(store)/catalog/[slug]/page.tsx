@@ -5,6 +5,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { DownloadableCatalogs } from "@/components/catalog/downloadable-catalogs";
 import { downloadableCatalogSections } from "@/config/downloadable-catalogs";
+import { absoluteUrl, siteName } from "@/lib/seo/site";
 
 const findSection = (slug: string) => downloadableCatalogSections.find((section) => section.slug === slug);
 
@@ -29,6 +30,15 @@ export async function generateMetadata({ params }: CatalogSectionPageProps): Pro
   return {
     title: `${section.title} | Catálogos BogerdPro`,
     description: section.description,
+    alternates: {
+      canonical: `/catalog/${section.slug}`,
+    },
+    openGraph: {
+      title: `${section.title} | ${siteName}`,
+      description: section.description,
+      url: absoluteUrl(`/catalog/${section.slug}`),
+      images: section.catalogs[0] ? [{ url: absoluteUrl(section.catalogs[0].image), alt: section.catalogs[0].imageAlt }] : undefined,
+    },
   };
 }
 

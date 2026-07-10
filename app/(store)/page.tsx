@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { ProductBrowser } from "@/components/catalog/product-browser";
 import { VisualSearch } from "@/components/catalog/visual-search";
@@ -7,9 +8,23 @@ import { Reveal } from "@/components/motion/reveal";
 import { HeroActionPanel } from "@/components/home/hero-action-panel";
 import { catalogCollections, valuePillars } from "@/config/site-content";
 import { getCatalogFilters, getCatalogProducts, parseCatalogSearchParams } from "@/lib/catalog/queries";
+import { absoluteUrl, defaultSeo, siteName } from "@/lib/seo/site";
 
 type HomePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export const metadata: Metadata = {
+  title: "Vestuario laboral y EPI para empresas",
+  description: defaultSeo.description,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: defaultSeo.title,
+    description: defaultSeo.description,
+    url: absoluteUrl("/"),
+    siteName,
+    images: [{ url: absoluteUrl(defaultSeo.image), alt: "BogerdPro vestuario laboral y EPI" }],
+  },
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
