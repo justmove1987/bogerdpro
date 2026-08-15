@@ -3,6 +3,7 @@ type SendEmailInput = {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
 };
 
 type ResendResponse = {
@@ -38,6 +39,7 @@ export async function sendTransactionalEmail(input: SendEmailInput) {
       subject: input.subject,
       html: input.html,
       text: input.text,
+      reply_to: input.replyTo,
     }),
   });
   const payload = (await response.json()) as ResendResponse;

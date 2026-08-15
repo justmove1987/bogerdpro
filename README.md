@@ -12,7 +12,7 @@ Plataforma ecommerce B2B/B2C para BogerdPro, construida con Next.js App Router, 
 - Auth.js / NextAuth con credenciales
 - Stripe Checkout y webhooks
 - Resend para emails transaccionales
-- Importación CSV de productos
+- Importación CSV/XLSX de productos
 - Upload local preparado para migrar a S3, Supabase Storage o Cloudflare R2
 
 ## Requisitos
@@ -111,12 +111,19 @@ app/admin/layout.tsx
 
 Solo usuarios con rol `ADMIN` pueden acceder. El botón Admin solo aparece en el header si la sesión tiene rol `ADMIN`.
 
-## Productos e importación CSV
+## Productos e importación
 
 Importación desde:
 
 ```txt
 /admin/imports
+```
+
+Importación masiva New Wave desde scripts:
+
+```bash
+py scripts/normalize-newwave-xlsx.py "archivo.xlsx" tmp/newwave-products.json
+npx tsx scripts/import-newwave-products.ts tmp/newwave-products.json --replace
 ```
 
 Ejemplo:
@@ -141,6 +148,8 @@ Reglas:
 - Los atributos usan formato `Clave=Valor|Clave=Valor`.
 - El CSV se valida antes de importar.
 - Tamaño máximo CSV: 2 MB.
+- El campo `stock` se mantiene por compatibilidad técnica del modelo, pero la tienda no muestra ni descuenta stock real.
+- El catálogo público funciona bajo pedido. La disponibilidad real se confirma con proveedor/fabricante o se gestiona manualmente activando/desactivando productos desde admin.
 
 ## Imágenes
 
@@ -167,6 +176,18 @@ Para producción con mucho catálogo se recomienda migrar a:
 - Supabase Storage
 - Cloudflare R2
 - AWS S3
+
+Auditoría de imágenes remotas del catálogo:
+
+```bash
+npx tsx scripts/audit-product-images.ts tmp/product-cover-audit.json
+```
+
+Por defecto revisa la portada de cada producto activo sin modificar la base de datos. Para revisar todas las imágenes:
+
+```bash
+IMAGE_AUDIT_MODE=all npx tsx scripts/audit-product-images.ts tmp/product-image-audit.json
+```
 
 ## Stripe
 
@@ -201,7 +222,7 @@ Seguridad:
 - El backend recalcula precios desde Prisma.
 - Se crea una comanda pendiente antes del pago.
 - Stripe confirma pago por webhook firmado.
-- El stock baja solo después de confirmación de Stripe.
+- No se descuenta stock automáticamente. Los productos se gestionan bajo pedido y la disponibilidad se controla manualmente desde admin.
 - No se guardan datos de tarjeta.
 
 ## Emails
@@ -265,7 +286,7 @@ Medidas incluidas:
 - Límite de tamaño en CSV.
 - Validación de formato y tamaño en uploads.
 - APIs admin protegidas con `requireAdmin`.
-- Carrito sin login, con validación de stock antes de pagar.
+- Carrito sin login, con validación server-side de variantes activas, cantidades y precios antes de pagar.
 
 Pendientes recomendados antes de producción:
 
@@ -274,6 +295,7 @@ Pendientes recomendados antes de producción:
 - Usar Stripe live keys.
 - Usar Resend con dominio verificado.
 - Mover uploads a storage externo.
+- Auditar portadas de producto y reparar productos con imágenes 404.
 - Activar backups de base de datos.
 - Revisar permisos de Supabase.
 - Configurar monitorización de errores.
@@ -341,7 +363,9 @@ https://tudominio.com/api/stripe/webhook
 - [ ] Importación CSV probada.
 - [ ] Checkout probado.
 - [ ] Webhook probado.
-- [ ] Stock baja tras pago confirmado.
+- [ ] Modelo bajo pedido revisado en textos legales y ficha de producto.
+- [ ] Productos agotados/no disponibles marcados manualmente como inactivos.
+- [ ] Auditoría de imágenes ejecutada y portadas 404 revisadas.
 - [ ] Sitemap accesible.
 - [ ] Robots accesible.
 - [ ] Backups activados.
@@ -359,4 +383,5 @@ npm run db:migrate
 npm run db:seed
 npm run db:studio
 npm run check:env
+npx tsx scripts/audit-product-images.ts tmp/product-cover-audit.json
 ```

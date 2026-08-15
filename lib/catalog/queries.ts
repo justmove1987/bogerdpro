@@ -112,49 +112,47 @@ export async function getCatalogProducts(filters: CatalogSearchParams) {
   const where = buildProductWhere(filters);
   const skip = (filters.page - 1) * PRODUCTS_PER_PAGE;
 
-  const [total, products] = await prisma.$transaction([
-    prisma.product.count({ where }),
-    prisma.product.findMany({
-      where,
-      orderBy: productOrderBy(filters.sort),
-      skip,
-      take: PRODUCTS_PER_PAGE,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        sku: true,
-        description: true,
-        isFeatured: true,
-        minPriceCents: true,
-        maxPriceCents: true,
-        category: { select: { name: true, slug: true } },
-        brand: { select: { name: true, slug: true } },
-        images: {
-          orderBy: { position: "asc" },
-          take: 1,
-          select: { url: true, alt: true },
+  const total = await prisma.product.count({ where });
+  const products = await prisma.product.findMany({
+    where,
+    orderBy: productOrderBy(filters.sort),
+    skip,
+    take: PRODUCTS_PER_PAGE,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      sku: true,
+      description: true,
+      isFeatured: true,
+      minPriceCents: true,
+      maxPriceCents: true,
+      category: { select: { name: true, slug: true } },
+      brand: { select: { name: true, slug: true } },
+      images: {
+        orderBy: { position: "asc" },
+        take: 1,
+        select: { url: true, alt: true },
+      },
+      variants: {
+        where: {
+          isActive: true,
+          ...(filters.color?.length ? { color: { in: filters.color } } : {}),
+          ...(filters.size?.length ? { size: { in: filters.size } } : {}),
         },
-        variants: {
-          where: {
-            isActive: true,
-            ...(filters.color?.length ? { color: { in: filters.color } } : {}),
-            ...(filters.size?.length ? { size: { in: filters.size } } : {}),
-          },
-          orderBy: { priceCents: filters.sort === "price-desc" ? "desc" : "asc" },
-          take: 6,
-          select: {
-            sku: true,
-            color: true,
-            size: true,
-            priceCents: true,
-            currency: true,
-            stock: true,
-          },
+        orderBy: { priceCents: filters.sort === "price-desc" ? "desc" : "asc" },
+        take: 6,
+        select: {
+          sku: true,
+          color: true,
+          size: true,
+          priceCents: true,
+          currency: true,
+          stock: true,
         },
       },
-    }),
-  ]);
+    },
+  });
 
   return {
     products,
@@ -166,56 +164,74 @@ export async function getCatalogProducts(filters: CatalogSearchParams) {
 }
 
 export async function getCatalogFilters() {
-  const [categories, brands, colors, sizes, attributes] = await prisma.$transaction([
-    prisma.category.findMany({
-      orderBy: [{ parentId: "asc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        parentId: true,
-        _count: { select: { products: { where: { isActive: true, status: "ACTIVE" } } } },
-      },
-    }),
-    prisma.brand.findMany({
-      orderBy: { name: "asc" },
-      select: {
-        name: true,
-        slug: true,
-        _count: { select: { products: { where: { isActive: true, status: "ACTIVE" } } } },
-      },
-    }),
-    prisma.productVariant.findMany({
-      where: { isActive: true, product: { isActive: true, status: "ACTIVE" }, color: { not: null } },
-      distinct: ["color"],
-      orderBy: { color: "asc" },
-      select: { color: true },
-    }),
-    prisma.productVariant.findMany({
-      where: { isActive: true, product: { isActive: true, status: "ACTIVE" }, size: { not: null } },
-      distinct: ["size"],
-      orderBy: { size: "asc" },
-      select: { size: true },
-    }),
-    prisma.attribute.findMany({
-      orderBy: { name: "asc" },
-      select: {
-        name: true,
-        slug: true,
-        values: {
-          orderBy: { value: "asc" },
-          select: { value: true, slug: true },
+  return getCatalogFiltersForSearch({
+    page: 1,
+    sort: "relevance",
+  });
+}
+
+export async function getCatalogFiltersForSearch(filters: CatalogSearchParams) {
+  const facetWhere = buildProductWhere({
+    page: 1,
+    sort: "relevance",
+    q: filters.q,
+  });
+
+  const categories = await prisma.category.findMany({
+    orderBy: [{ parentId: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      parentId: true,
+      _count: { select: { products: { where: facetWhere } } },
+    },
+  });
+  const brands = await prisma.brand.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      name: true,
+      slug: true,
+      _count: { select: { products: { where: facetWhere } } },
+    },
+  });
+  const colors = await prisma.productVariant.findMany({
+    where: { isActive: true, product: facetWhere, color: { not: null } },
+    distinct: ["color"],
+    orderBy: { color: "asc" },
+    select: { color: true },
+  });
+  const sizes = await prisma.productVariant.findMany({
+    where: { isActive: true, product: facetWhere, size: { not: null } },
+    distinct: ["size"],
+    orderBy: { size: "asc" },
+    select: { size: true },
+  });
+  const attributes = await prisma.attribute.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      name: true,
+      slug: true,
+      values: {
+        where: {
+          products: {
+            some: {
+              product: facetWhere,
+            },
+          },
         },
+        orderBy: { value: "asc" },
+        select: { value: true, slug: true },
       },
-    }),
-  ]);
+    },
+  });
 
   return {
-    categories,
-    brands,
+    categories: categories.filter((category) => category._count.products > 0),
+    brands: brands.filter((brand) => brand._count.products > 0),
     colors: colors.flatMap((item) => (item.color ? [item.color] : [])),
     sizes: sizes.flatMap((item) => (item.size ? [item.size] : [])),
-    attributes,
+    attributes: attributes.filter((attribute) => attribute.values.length > 0),
   };
 }
 

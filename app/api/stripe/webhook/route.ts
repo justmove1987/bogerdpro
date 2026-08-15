@@ -26,24 +26,6 @@ async function markOrderAsPaid(session: Stripe.Checkout.Session) {
       return { order, shouldSendEmails: false };
     }
 
-    for (const item of order.items) {
-      if (!item.variantId) continue;
-
-      const updated = await tx.productVariant.updateMany({
-        where: {
-          id: item.variantId,
-          stock: { gte: item.quantity },
-        },
-        data: {
-          stock: { decrement: item.quantity },
-        },
-      });
-
-      if (updated.count !== 1) {
-        throw new Error(`Not enough stock for variant ${item.variantId}.`);
-      }
-    }
-
     const paidOrder = await tx.order.update({
       where: { id: order.id },
       data: {

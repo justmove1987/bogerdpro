@@ -7,18 +7,36 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/components/cart/cart-provider";
-import { locales } from "@/config/i18n";
-import { catalogCollections } from "@/config/site-content";
+import { locales, type Locale } from "@/config/i18n";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
-const menuCollections = catalogCollections;
+type HeaderCollection = {
+  title: string;
+  href: string;
+  description: string;
+};
 
-export function Header() {
+export function Header({
+  locale,
+  labels,
+  collections,
+}: {
+  locale: Locale;
+  labels: Dictionary["nav"];
+  collections: HeaderCollection[];
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const { data: session } = useSession();
   const { count } = useCart();
   const isLoggedIn = Boolean(session?.user);
   const isAdmin = session?.user?.role === "ADMIN";
+
+  function changeLanguage(code: Locale) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", code);
+    window.location.assign(url.toString());
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#e7e2d8] bg-[#f7f5f0]/88 backdrop-blur-xl">
@@ -36,7 +54,7 @@ export function Header() {
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Principal">
           <Link className="rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-[#62615d] transition hover:bg-white hover:text-[#151515]" href="/">
-            Inicio
+            {labels.home}
           </Link>
           <div className="relative" onMouseEnter={() => setMegaOpen(true)} onMouseLeave={() => setMegaOpen(false)}>
             <button
@@ -45,7 +63,7 @@ export function Header() {
               onClick={() => setMegaOpen((value) => !value)}
               aria-expanded={megaOpen}
             >
-              Catálogos <ChevronDown size={15} />
+              {labels.catalogs} <ChevronDown size={15} />
             </button>
             {megaOpen ? (
               <motion.div
@@ -56,29 +74,17 @@ export function Header() {
               >
                 <div className="grid grid-cols-[1fr_260px] gap-4">
                   <div className="grid grid-cols-2 gap-2">
-                    {menuCollections.map((category) => (
-                      <Link
-                        key={category.href}
-                        href={category.href}
-                        className="group flex gap-3 rounded-[var(--radius-sm)] p-3 transition duration-200 hover:bg-[#f7f5f0]"
-                      >
-                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-sm)] bg-[var(--accent-soft)] text-[var(--accent)]">
-                          <category.icon size={20} />
-                        </span>
-                        <span>
-                          <span className="block text-sm font-semibold text-[#151515]">{category.title}</span>
-                          <span className="mt-1 block text-sm leading-5 text-[#62615d]">{category.description}</span>
-                        </span>
-                      </Link>
+                    {collections.map((category) => (
+                      <MenuCollectionLink key={category.href} category={category} />
                     ))}
                   </div>
                   <div className="rounded-[var(--radius-sm)] bg-[#151515] p-4 text-white">
-                    <p className="text-sm font-semibold">Encuentra antes lo que necesitas</p>
+                    <p className="text-sm font-semibold">{labels.megaTitle}</p>
                     <p className="mt-2 text-sm leading-6 text-white/70">
-                      Accede por sector, protección, calzado o alta visibilidad y reduce el tiempo de compra.
+                      {labels.megaText}
                     </p>
                     <Link href="/catalog" className="mt-5 inline-flex text-sm font-semibold text-[#9fc6f0]">
-                      Ver todos los catálogos
+                      {labels.viewAllCatalogs}
                     </Link>
                   </div>
                 </div>
@@ -86,7 +92,7 @@ export function Header() {
             ) : null}
           </div>
           <Link className="rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-[#62615d] transition hover:bg-white hover:text-[#151515]" href="/contacto">
-            Contacto
+            {labels.contact}
           </Link>
           {isAdmin ? (
             <Link className="rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-[#62615d] transition hover:bg-white hover:text-[#151515]" href="/admin">
@@ -96,24 +102,31 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <div className="flex items-center rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white p-1" aria-label="Selector de idioma">
-            {locales.map((locale) => (
-              <span
-                key={locale.code}
-                className={`rounded px-2 py-1 text-xs font-semibold ${locale.code === "es" ? "bg-[var(--accent)] text-white" : "text-[#62615d]"}`}
-                title={locale.label}
+          <div className="flex items-center rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white p-1" aria-label={labels.languageSelector}>
+            {locales.map((item) => (
+              <button
+                key={item.code}
+                type="button"
+                onClick={() => changeLanguage(item.code)}
+                className={`cursor-pointer rounded px-2 py-1 text-xs font-semibold transition duration-150 ${
+                  item.code === locale
+                    ? "bg-[var(--accent)] text-white"
+                    : "text-[#62615d] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+                }`}
+                title={item.label}
+                aria-pressed={item.code === locale}
               >
-                {locale.shortLabel}
-              </span>
+                {item.shortLabel}
+              </button>
             ))}
           </div>
-          <Link href="/cart" aria-label="Carrito" className="premium-focus relative rounded-[var(--radius-sm)] p-2 transition hover:bg-white">
+          <Link href="/cart" aria-label={labels.cart} className="premium-focus relative rounded-[var(--radius-sm)] p-2 transition hover:bg-white">
             <ShoppingCart size={20} />
             <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white">{count}</span>
           </Link>
           <Link
             href={isLoggedIn ? "/cuenta" : "/login"}
-            aria-label={isLoggedIn ? "Mi cuenta. Sesión iniciada" : "Iniciar sesión. Sesión no iniciada"}
+            aria-label={isLoggedIn ? `${labels.account}. ${labels.loggedIn}` : `${labels.login}. ${labels.loggedOut}`}
             className="premium-focus relative rounded-[var(--radius-sm)] p-2 transition hover:bg-white"
           >
             <UserRound size={20} />
@@ -128,7 +141,7 @@ export function Header() {
           className="premium-focus rounded-[var(--radius-sm)] p-2 lg:hidden"
           type="button"
           onClick={() => setMenuOpen((value) => !value)}
-          aria-label="Abrir menú"
+          aria-label={labels.openMenu}
         >
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -138,19 +151,37 @@ export function Header() {
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="border-t border-[#e7e2d8] bg-white px-4 py-4 lg:hidden">
           <div className="grid gap-2">
             <Link href="/" className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
-              Inicio
+              {labels.home}
             </Link>
-            {menuCollections.map((category) => (
+            {collections.map((category) => (
               <Link key={category.href} href={category.href} className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
                 {category.title}
               </Link>
             ))}
             <Link href="/contacto" className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
-              Contacto
+              {labels.contact}
             </Link>
+            <div className="flex w-fit items-center rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white p-1" aria-label={labels.languageSelector}>
+              {locales.map((item) => (
+                <button
+                  key={item.code}
+                  type="button"
+                  onClick={() => changeLanguage(item.code)}
+                  className={`cursor-pointer rounded px-2 py-1 text-xs font-semibold transition duration-150 ${
+                    item.code === locale
+                      ? "bg-[var(--accent)] text-white"
+                      : "text-[#62615d] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+                  }`}
+                  title={item.label}
+                  aria-pressed={item.code === locale}
+                >
+                  {item.shortLabel}
+                </button>
+              ))}
+            </div>
             <Link href={isLoggedIn ? "/cuenta" : "/login"} className="flex items-center justify-between rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
-              <span>{isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}</span>
-              <span className={`h-2.5 w-2.5 rounded-full ${isLoggedIn ? "bg-emerald-500" : "bg-red-500"}`} aria-label={isLoggedIn ? "Sesión iniciada" : "Sesión no iniciada"} />
+              <span>{isLoggedIn ? labels.account : labels.login}</span>
+              <span className={`h-2.5 w-2.5 rounded-full ${isLoggedIn ? "bg-emerald-500" : "bg-red-500"}`} aria-label={isLoggedIn ? labels.loggedIn : labels.loggedOut} />
             </Link>
             {isAdmin ? (
               <Link href="/admin" className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
@@ -161,5 +192,22 @@ export function Header() {
         </motion.div>
       ) : null}
     </header>
+  );
+}
+
+function MenuCollectionLink({ category }: { category: HeaderCollection }) {
+  return (
+    <Link
+      href={category.href}
+      className="group flex gap-3 rounded-[var(--radius-sm)] p-3 transition duration-200 hover:bg-[#f7f5f0]"
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-sm)] bg-[var(--accent-soft)] text-[var(--accent)]">
+        <ShoppingCart size={20} />
+      </span>
+      <span>
+        <span className="block text-sm font-semibold text-[#151515]">{category.title}</span>
+        <span className="mt-1 block text-sm leading-5 text-[#62615d]">{category.description}</span>
+      </span>
+    </Link>
   );
 }

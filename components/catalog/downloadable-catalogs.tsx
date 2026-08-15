@@ -2,13 +2,15 @@
 import Link from "next/link";
 import { Download, FileText } from "lucide-react";
 import { downloadableCatalogSections } from "@/config/downloadable-catalogs";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 type DownloadableCatalogsProps = {
   sectionSlug?: string;
   showSectionIntro?: boolean;
+  labels: Pick<Dictionary["catalog"], "downloadCatalog">;
 };
 
-export function DownloadableCatalogs({ sectionSlug, showSectionIntro = true }: DownloadableCatalogsProps) {
+export function DownloadableCatalogs({ sectionSlug, showSectionIntro = true, labels }: DownloadableCatalogsProps) {
   const sections = sectionSlug
     ? downloadableCatalogSections.filter((section) => section.slug === sectionSlug)
     : downloadableCatalogSections;
@@ -78,7 +80,7 @@ export function DownloadableCatalogs({ sectionSlug, showSectionIntro = true }: D
                   ) : null}
                   <span className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white transition duration-200 group-hover:bg-[var(--accent)]">
                     <Download size={17} />
-                    Descargar catálogo
+                    {labels.downloadCatalog}
                   </span>
                 </div>
               </Link>

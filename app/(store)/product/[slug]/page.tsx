@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { CheckCircle2 } from "lucide-react";
 import { ProductPurchasePanel } from "@/components/cart/product-purchase-panel";
 import { ProductCard } from "@/components/catalog/product-card";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { JsonLd } from "@/components/seo/json-ld";
 import { formatPriceRange } from "@/lib/catalog/format";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/queries";
+import { getCurrentDictionary } from "@/lib/i18n/locale";
 import { absoluteUrl, siteName } from "@/lib/seo/site";
 
 type ProductPageProps = {
@@ -58,6 +59,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+  const dictionary = await getCurrentDictionary();
 
   if (!product) {
     notFound();
@@ -65,7 +67,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const relatedProducts = await getRelatedProducts(product);
   const mainImage = product.images[0];
-  const totalStock = product.variants.reduce((total, variant) => total + variant.stock, 0);
   const firstVariant = product.variants[0];
   const attributes = product.attributeValues.reduce<Record<string, string[]>>((groups, item) => {
     const name = item.attributeValue.attribute.name;
@@ -90,7 +91,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 "@type": "Offer",
                 priceCurrency: firstVariant.currency,
                 price: (firstVariant.priceCents / 100).toFixed(2),
-                availability: totalStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                availability: "https://schema.org/PreOrder",
                 url: absoluteUrl(`/product/${product.slug}`),
               }
             : undefined,
@@ -98,8 +99,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
       <Breadcrumbs
         items={[
-          { href: "/", label: "Inicio" },
-          { href: "/catalog", label: "Catálogos" },
+          { href: "/", label: dictionary.nav.home },
+          { href: "/catalog", label: dictionary.catalog.catalogs },
           ...(product.category ? [{ href: `/catalog?category=${product.category.slug}`, label: product.category.name }] : []),
           { label: product.name },
         ]}
@@ -107,8 +108,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="mt-8 grid gap-10 lg:grid-cols-[0.96fr_1.04fr]">
         <div className="rounded-[24px] border border-[#e7e2d8] bg-white p-4">
           <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#efebe3]">
-            <Image
+            <ImageWithFallback
               src={mainImage?.url ?? "/images/products/workwear-chaleco-casco.jpg"}
+              fallbackSrc="/images/products/workwear-chaleco-casco.jpg"
               alt={mainImage?.alt ?? product.name}
               fill
               priority
@@ -120,7 +122,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="mt-4 grid grid-cols-4 gap-3">
               {product.images.slice(1, 5).map((image) => (
                 <div key={image.id} className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] border border-[#e7e2d8] bg-[#f7f5f0]">
-                  <Image src={image.url} alt={image.alt ?? product.name} fill sizes="120px" className="object-cover" />
+                  <ImageWithFallback src={image.url} fallbackSrc="/images/products/workwear-chaleco-casco.jpg" alt={image.alt ?? product.name} fill sizes="120px" className="object-cover" />
                 </div>
               ))}
             </div>
@@ -132,7 +134,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="mt-5 flex flex-wrap gap-3 text-sm">
             <span className="rounded-full border border-[#d8d1c5] bg-white px-3 py-1 text-[#62615d]">{product.sku ?? product.variants[0]?.sku ?? "-"}</span>
             <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 font-semibold text-[var(--accent)]">
-              {totalStock > 0 ? "En stock" : "Bajo pedido"}
+              {dictionary.catalog.onRequest}
             </span>
             {product.category ? <span className="rounded-full border border-[#d8d1c5] bg-white px-3 py-1 text-[#62615d]">{product.category.name}</span> : null}
           </div>
@@ -154,6 +156,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               currency: variant.currency,
               stock: variant.stock,
             }))}
+            labels={dictionary.product}
           />
 
           <div className="mt-6 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
@@ -162,10 +165,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <thead className="bg-[#f7f5f0] text-[#62615d]">
                   <tr>
                     <th className="px-4 py-3">SKU</th>
-                    <th className="px-4 py-3">Color</th>
-                    <th className="px-4 py-3">Talla</th>
-                    <th className="px-4 py-3">Stock</th>
-                    <th className="px-4 py-3">Precio</th>
+                    <th className="px-4 py-3">{dictionary.product.color}</th>
+                    <th className="px-4 py-3">{dictionary.product.size}</th>
+                    <th className="px-4 py-3">{dictionary.product.price}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -174,7 +176,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       <td className="px-4 py-3 font-medium">{variant.sku}</td>
                       <td className="px-4 py-3 text-[#62615d]">{variant.color ?? "-"}</td>
                       <td className="px-4 py-3 text-[#62615d]">{variant.size ?? "-"}</td>
-                      <td className="px-4 py-3 text-[#62615d]">{variant.stock}</td>
                       <td className="px-4 py-3 font-semibold">{formatPriceRange(variant.priceCents, variant.priceCents, variant.currency)}</td>
                     </tr>
                   ))}
@@ -185,7 +186,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           {Object.keys(attributes).length ? (
             <div className="mt-6 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
-              <h2 className="text-lg font-semibold">Características</h2>
+              <h2 className="text-lg font-semibold">{dictionary.product.features}</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {Object.entries(attributes).map(([name, values]) => (
                   <div key={name} className="flex gap-3 rounded-[var(--radius-sm)] bg-[#f7f5f0] p-3 text-sm">
@@ -206,13 +207,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="mt-14">
           <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">También puede interesarte</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">Productos relacionados</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">{dictionary.product.relatedEyebrow}</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">{dictionary.product.relatedTitle}</h2>
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {relatedProducts.map((related) => (
-              <ProductCard key={related.slug} product={related} />
+              <ProductCard key={related.slug} product={related} labels={dictionary.catalog} />
             ))}
           </div>
         </section>

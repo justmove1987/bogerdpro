@@ -1,4 +1,5 @@
 export const defaultLocale = "es";
+export const localeCookieName = "bogerdpro_locale";
 
 export const locales = [
   { code: "es", label: "Español", shortLabel: "ES" },
@@ -8,3 +9,7 @@ export const locales = [
 ] as const;
 
 export type Locale = (typeof locales)[number]["code"];
+
+export function isLocale(value: unknown): value is Locale {
+  return typeof value === "string" && locales.some((locale) => locale.code === value);
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 function pageHref(searchParams: Record<string, string | string[] | undefined>, page: number, basePath: string) {
   const params = new URLSearchParams();
@@ -22,11 +23,13 @@ export function Pagination({
   pageCount,
   searchParams,
   basePath = "/catalog",
+  labels,
 }: {
   page: number;
   pageCount: number;
   searchParams: Record<string, string | string[] | undefined>;
   basePath?: string;
+  labels: Pick<Dictionary["catalog"], "prev" | "next">;
 }) {
   if (pageCount <= 1) return null;
 
@@ -43,7 +46,7 @@ export function Pagination({
         className="premium-focus inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-3 text-sm font-semibold text-[#151515] transition hover:border-[#151515] aria-disabled:pointer-events-none aria-disabled:opacity-45"
       >
         <ChevronLeft size={16} />
-        Anterior
+        {labels.prev}
       </Link>
       {pages.map((item, index) => {
         const previous = pages[index - 1];
@@ -66,7 +69,7 @@ export function Pagination({
         aria-disabled={page >= pageCount}
         className="premium-focus inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-3 text-sm font-semibold text-[#151515] transition hover:border-[#151515] aria-disabled:pointer-events-none aria-disabled:opacity-45"
       >
-        Siguiente
+        {labels.next}
         <ChevronRight size={16} />
       </Link>
     </nav>

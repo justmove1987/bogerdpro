@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useTransition } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import type { CatalogSearchParams } from "@/lib/catalog/queries";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 type CatalogFiltersData = {
   categories: {
@@ -89,10 +90,12 @@ export function CatalogFilters({
   filters,
   selected,
   actionPath = "/catalog",
+  labels,
 }: {
   filters: CatalogFiltersData;
   selected: CatalogSearchParams;
   actionPath?: string;
+  labels: Dictionary["catalog"];
 }) {
   const parentCategories = filters.categories.filter((category) => !category.parentId);
   const childCategories = filters.categories.filter((category) => category.parentId);
@@ -136,17 +139,17 @@ export function CatalogFilters({
         {selected.sort !== "relevance" ? <input type="hidden" name="sort" value={selected.sort} /> : null}
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold">Filtros</h2>
-            {totalSelected > 0 ? <p className="mt-1 text-xs text-[#62615d]">{totalSelected} activos</p> : null}
+            <h2 className="text-base font-semibold">{labels.filters}</h2>
+            {totalSelected > 0 ? <p className="mt-1 text-xs text-[#62615d]">{totalSelected} {labels.active}</p> : null}
           </div>
           <div className="flex items-center gap-2 text-[#62615d]">
-            {isPending ? <span className="text-xs">Aplicando...</span> : null}
+            {isPending ? <span className="text-xs">{labels.applying}</span> : null}
             <SlidersHorizontal size={18} />
           </div>
         </div>
 
         <div className="mt-4 grid gap-2">
-          <FilterGroup title="Categoría" count={selectedCount(selected.category)}>
+          <FilterGroup title={labels.category} count={selectedCount(selected.category)}>
             {[...parentCategories, ...childCategories].map((category) => (
               <CheckboxFilter
                 key={category.slug}
@@ -159,7 +162,7 @@ export function CatalogFilters({
             ))}
           </FilterGroup>
 
-          <FilterGroup title="Marca" count={selectedCount(selected.brand)}>
+          <FilterGroup title={labels.brand} count={selectedCount(selected.brand)}>
             {filters.brands.map((brand) => (
               <CheckboxFilter
                 key={brand.slug}
@@ -172,7 +175,7 @@ export function CatalogFilters({
             ))}
           </FilterGroup>
 
-          <FilterGroup title="Color" count={selectedCount(selected.color)}>
+          <FilterGroup title={labels.color} count={selectedCount(selected.color)}>
             <div className="grid grid-cols-2 gap-1">
               {filters.colors.map((color) => (
                 <CheckboxFilter key={color} name="color" value={color} label={color} checked={isSelected(selected.color, color)} />
@@ -180,7 +183,7 @@ export function CatalogFilters({
             </div>
           </FilterGroup>
 
-          <FilterGroup title="Talla" count={selectedCount(selected.size)}>
+          <FilterGroup title={labels.size} count={selectedCount(selected.size)}>
             <div className="grid grid-cols-2 gap-1">
               {filters.sizes.map((size) => (
                 <CheckboxFilter key={size} name="size" value={size} label={size} checked={isSelected(selected.size, size)} />
@@ -188,10 +191,10 @@ export function CatalogFilters({
             </div>
           </FilterGroup>
 
-          <FilterGroup title="Precio" count={priceCount}>
+          <FilterGroup title={labels.price} count={priceCount}>
             <div className="grid grid-cols-2 gap-2 px-2 py-1">
               <label className="text-xs font-medium text-[#62615d]">
-                Mín.
+                {labels.min}
                 <input
                   className="premium-focus mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm"
                   name="minPrice"
@@ -202,7 +205,7 @@ export function CatalogFilters({
                 />
               </label>
               <label className="text-xs font-medium text-[#62615d]">
-                Máx.
+                {labels.max}
                 <input
                   className="premium-focus mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm"
                   name="maxPrice"
@@ -236,7 +239,7 @@ export function CatalogFilters({
             scroll={false}
             className="premium-focus inline-flex h-10 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[#d8d1c5] text-sm font-semibold text-[#151515] transition hover:border-[#151515]"
           >
-            Limpiar filtros
+            {labels.clearFilters}
           </Link>
         </div>
       </form>

@@ -39,14 +39,12 @@ export default async function AdminProductsPage() {
               <th className="px-4 py-3">Categoría</th>
               <th className="px-4 py-3">Marca</th>
               <th className="px-4 py-3">Precio</th>
-              <th className="px-4 py-3">Stock</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {products.map((product) => {
-              const stock = product.variants.reduce((total, variant) => total + variant.stock, 0);
               return (
                 <tr key={product.id} className="border-t border-neutral-100 align-top">
                   <td className="px-4 py-3 font-medium">
@@ -56,7 +54,6 @@ export default async function AdminProductsPage() {
                   <td className="px-4 py-3 text-neutral-600">{product.category?.name ?? "-"}</td>
                   <td className="px-4 py-3 text-neutral-600">{product.brand?.name ?? "-"}</td>
                   <td className="px-4 py-3 text-neutral-600">{product.minPriceCents ? `${centsToEuros(product.minPriceCents)} €` : "Consultar"}</td>
-                  <td className="px-4 py-3 text-neutral-600">{stock}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${product.isActive ? "bg-green-50 text-green-700" : "bg-neutral-100 text-neutral-600"}`}>
                       {product.isActive ? "Activo" : "Inactivo"}
@@ -86,7 +83,7 @@ export default async function AdminProductsPage() {
             })}
             {products.length === 0 ? (
               <tr>
-                <td className="px-4 py-8 text-center text-neutral-500" colSpan={8}>
+                <td className="px-4 py-8 text-center text-neutral-500" colSpan={7}>
                   Todavía no hay productos. Crea el primero o importa un CSV.
                 </td>
               </tr>

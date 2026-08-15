@@ -4,7 +4,7 @@ export const privacyPolicy = {
     "En Bogerd Pro, SLU nos comprometemos a proteger la privacidad de las personas que se relacionan con nosotros a través de esta web, por correo electrónico, por teléfono o por cualquier otro canal profesional.",
     "La presente Política de Privacidad informa sobre cómo tratamos los datos personales que podamos recabar a través de nuestro sitio web y de nuestros canales de contacto, de conformidad con el Reglamento (UE) 2016/679 (RGPD), la Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD) y demás normativa aplicable.",
   ],
-  updatedAt: "10 de marzo de 2026",
+  updatedAt: "15 de agosto de 2026",
   sections: [
     {
       title: "1. Responsable del tratamiento",
@@ -182,6 +182,7 @@ export const generalTerms = {
     "Las presentes Condiciones Generales de Venta regulan la oferta, venta, suministro y, en su caso, personalización de prendas de vestuario laboral, uniformidad corporativa, calzado profesional, equipos de protección individual (EPI), accesorios y demás productos comercializados por Bogerd Pro, SLU.",
     "Bogerd Pro, SLU comercializa sus productos exclusivamente en el ámbito B2B, dirigiéndose a empresas, autónomos, profesionales, asociaciones, entidades y organizaciones, y no realiza ventas a consumidores particulares.",
   ],
+  updatedAt: "15 de agosto de 2026",
   company: [
     "Titular: Bogerd Pro, SLU",
     "Domicilio social: Carrer Tarragona 66, 17130 L'Escala, España",
@@ -213,6 +214,7 @@ export const generalTerms = {
       paragraphs: [
         "Bogerd Pro, SLU comercializa productos de vestuario laboral, moda corporativa, uniformidad, alta visibilidad, prendas técnicas, calzado profesional, accesorios, elementos promocionales relacionados con la uniformidad y equipos de protección individual.",
         "Las fotografías, fichas técnicas, descripciones, colores, acabados, medidas, gramajes, composiciones y demás información comercial facilitada por fabricantes, catálogos o soportes digitales tendrán carácter orientativo. Podrán existir pequeñas variaciones no sustanciales propias del fabricante, del lote, del proceso de personalización o del soporte de visualización.",
+        "Salvo indicación expresa en contrario, los productos publicados en la web se ofrecen bajo pedido o sujetos a confirmación de disponibilidad. La publicación de un producto no implica que exista disponibilidad inmediata en almacén propio.",
         "Bogerd Pro, SLU se reserva el derecho a sustituir referencias descatalogadas o no disponibles por otras equivalentes, previa comunicación al cliente, o bien a cancelar total o parcialmente la línea afectada del pedido.",
       ],
     },
@@ -249,17 +251,18 @@ export const generalTerms = {
     {
       title: "7. Disponibilidad y aprovisionamiento",
       paragraphs: [
-        "La disponibilidad de los productos queda sujeta al stock de Bogerd Pro, SLU y al de sus proveedores o fabricantes.",
+        "La mayoría de productos se gestionan bajo pedido y se aprovisionan a través de proveedores, distribuidores o fabricantes externos una vez recibida la solicitud, pedido o pago, según el caso.",
+        "Las indicaciones de disponibilidad mostradas en la web tienen carácter informativo y no constituyen una garantía de disponibilidad inmediata. Bogerd Pro, SLU no controla en tiempo real el inventario de todos sus proveedores o fabricantes.",
         "En caso de falta de disponibilidad total o parcial, Bogerd Pro, SLU podrá:",
       ],
       items: [
         "Ofrecer una referencia alternativa equivalente.",
         "Servir parcialmente el pedido.",
-        "Aplazar la entrega hasta reposición.",
+        "Aplazar la entrega hasta la reposición o recepción del producto por parte del proveedor.",
         "Cancelar la línea afectada, reintegrando, en su caso, las cantidades cobradas por dicha línea.",
       ],
       closing:
-        "Bogerd Pro, SLU no será responsable por descatalogaciones, roturas de stock, retrasos del fabricante o imposibilidad de suministro ajena a su control razonable.",
+        "Bogerd Pro, SLU no será responsable por descatalogaciones, falta de disponibilidad del proveedor, retrasos del fabricante o imposibilidad de suministro ajena a su control razonable.",
     },
     {
       title: "8. Personalización y trabajos especiales",
@@ -290,7 +293,7 @@ export const generalTerms = {
         "Dichos plazos podrán verse alterados por causas como:",
       ],
       items: [
-        "Falta de stock.",
+        "Necesidad de aprovisionamiento externo o falta de disponibilidad del proveedor.",
         "Retrasos del fabricante o transportista.",
         "Campañas de alta demanda.",
         "Incidencias logísticas.",

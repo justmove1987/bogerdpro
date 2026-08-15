@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import { formatPriceRange } from "@/lib/catalog/format";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 type PurchaseVariant = {
   id: string;
@@ -23,10 +24,11 @@ type ProductPurchasePanelProps = {
     image?: string | null;
   };
   variants: PurchaseVariant[];
+  labels: Dictionary["product"];
 };
 
-export function ProductPurchasePanel({ product, variants }: ProductPurchasePanelProps) {
-  const availableVariants = variants.filter((variant) => variant.stock > 0);
+export function ProductPurchasePanel({ product, variants, labels }: ProductPurchasePanelProps) {
+  const availableVariants = variants;
   const firstVariant = availableVariants[0] ?? variants[0];
   const [selectedVariantId, setSelectedVariantId] = useState(firstVariant?.id ?? "");
   const [quantity, setQuantity] = useState(1);
@@ -54,7 +56,7 @@ export function ProductPurchasePanel({ product, variants }: ProductPurchasePanel
   }
 
   function handleAdd() {
-    if (!selectedVariant || selectedVariant.stock <= 0) return;
+    if (!selectedVariant) return;
 
     addItem(
       {
@@ -81,38 +83,36 @@ export function ProductPurchasePanel({ product, variants }: ProductPurchasePanel
     <div className="mt-8 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm text-[#62615d]">Precio profesional</p>
+          <p className="text-sm text-[#62615d]">{labels.professionalPrice}</p>
           <p className="mt-1 text-3xl font-bold tracking-tight">
-            {selectedVariant ? formatPriceRange(selectedVariant.priceCents, selectedVariant.priceCents, selectedVariant.currency) : "Consultar"}
+            {selectedVariant ? formatPriceRange(selectedVariant.priceCents, selectedVariant.priceCents, selectedVariant.currency) : labels.ask}
           </p>
           {selectedVariant ? (
             <p className="mt-2 text-sm text-[#62615d]">
-              SKU variante: <span className="font-semibold text-[#151515]">{selectedVariant.sku}</span>
+              {labels.variantSku}: <span className="font-semibold text-[#151515]">{selectedVariant.sku}</span>
             </p>
           ) : null}
         </div>
 
         <div className="w-full sm:w-56">
           <label className="text-sm font-semibold" htmlFor="quantity">
-            Cantidad
+            {labels.quantity}
           </label>
           <input
             id="quantity"
             type="number"
             min={1}
-            max={selectedVariant?.stock ?? 1}
             value={quantity}
-            onChange={(event) => setQuantity(Math.max(1, Math.min(Number(event.target.value), selectedVariant?.stock ?? 1)))}
+            onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))}
             className="premium-focus mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-3 text-sm"
           />
-          <p className="mt-2 text-xs text-[#62615d]">Stock disponible: {selectedVariant?.stock ?? 0}</p>
         </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {colors.length ? (
           <div>
-            <p className="text-sm font-semibold">Color</p>
+            <p className="text-sm font-semibold">{labels.color}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {colors.map((color) => (
                 <button
@@ -132,7 +132,7 @@ export function ProductPurchasePanel({ product, variants }: ProductPurchasePanel
 
         {sizes.length ? (
           <div>
-            <p className="text-sm font-semibold">Talla</p>
+            <p className="text-sm font-semibold">{labels.size}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {sizes.map((size) => (
                 <button
@@ -154,11 +154,11 @@ export function ProductPurchasePanel({ product, variants }: ProductPurchasePanel
       <button
         type="button"
         onClick={handleAdd}
-        disabled={!selectedVariant || selectedVariant.stock <= 0}
+        disabled={!selectedVariant}
         className="premium-focus mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-5 text-sm font-semibold text-white shadow-[0_12px_30px_rgb(21_21_21/0.16)] transition duration-200 hover:-translate-y-0.5 hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
       >
         <ShoppingCart size={18} />
-        {added ? "Añadido al carrito" : "Añadir al carrito"}
+        {added ? labels.added : labels.add}
       </button>
     </div>
   );

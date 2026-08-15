@@ -27,7 +27,7 @@ export default async function AdminPage() {
       <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Operativa</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight">Panel de administración</h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-[#62615d]">
-        Gestiona productos, variantes, stock, precios, catálogos y pedidos desde un panel sencillo para el día a día.
+        Gestiona productos, variantes, disponibilidad, precios, catálogos y pedidos desde un panel sencillo para el día a día.
       </p>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {cards.map((item) => (

@@ -3,17 +3,18 @@
 import Image from "next/image";
 import { ArrowRight, Award, CheckCircle2, Gauge, Layers3, PackageCheck, Search, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
-import { companyStats } from "@/config/site-content";
-
-const steps = [
-  { icon: Search, label: "Busca por sector, referencia o producto", value: "01" },
-  { icon: Gauge, label: "Filtra por protección, uso y disponibilidad", value: "02" },
-  { icon: CheckCircle2, label: "Selecciona variantes y solicita compra", value: "03" },
-];
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 const statIcons = [Award, Layers3, PackageCheck];
+const stepIcons = [Search, Gauge, CheckCircle2];
 
-export function HeroActionPanel() {
+export function HeroActionPanel({
+  labels,
+  stats,
+}: {
+  labels: Dictionary["home"];
+  stats: { label: string; value: string }[];
+}) {
   return (
     <div className="grid content-center">
       <div className="overflow-hidden rounded-[28px] border border-[#dbe3ec] bg-[#101820] shadow-[0_28px_90px_rgb(16_24_32/0.14)]">
@@ -31,11 +32,11 @@ export function HeroActionPanel() {
           <div className="relative z-10 flex min-h-[602px] flex-col justify-between">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold">Compra profesional</p>
-                <p className="mt-1 text-xs text-white/62">Ruta rápida de selección</p>
+                <p className="text-sm font-semibold">{labels.panelTitle}</p>
+                <p className="mt-1 text-xs text-white/62">{labels.panelSubtitle}</p>
               </div>
               <span className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-bold shadow-[0_10px_28px_rgb(53_114_184/0.36)]">
-                3 clics
+                {labels.panelClicks}
               </span>
             </div>
 
@@ -43,36 +44,38 @@ export function HeroActionPanel() {
               <div className="rounded-[var(--radius-md)] border border-white/14 bg-[#101820]/42 p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <ShieldCheck size={18} className="text-[#9fc6f0]" />
-                  Solución recomendada
+                  {labels.recommended}
                 </div>
-                <p className="mt-2 text-2xl font-semibold tracking-tight">Alta visibilidad para obra</p>
+                <p className="mt-2 text-2xl font-semibold tracking-tight">{labels.recommendedText}</p>
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/15">
                   <div className="h-full w-[86%] rounded-full bg-[#9fc6f0]" />
                 </div>
               </div>
 
               <div className="mt-4 grid gap-3">
-                {steps.map((item, index) => (
+                {labels.steps.map((step, index) => {
+                  const Icon = stepIcons[index] ?? Search;
+                  return (
                   <motion.div
-                    key={item.label}
+                    key={step}
                     className="flex items-center gap-3 rounded-[var(--radius-sm)] border border-white/10 bg-[#101820]/62 p-3 backdrop-blur-md"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, delay: 0.08 * index }}
                   >
                     <span className="grid h-9 w-9 place-items-center rounded-[var(--radius-sm)] bg-white text-[var(--accent)]">
-                      <item.icon size={18} />
+                      <Icon size={18} />
                     </span>
-                    <span className="min-w-0 flex-1 text-sm text-white/88">{item.label}</span>
-                    <span className="text-xs font-semibold text-white/42">{item.value}</span>
+                    <span className="min-w-0 flex-1 text-sm text-white/88">{step}</span>
+                    <span className="text-xs font-semibold text-white/42">{String(index + 1).padStart(2, "0")}</span>
                   </motion.div>
-                ))}
+                )})}
               </div>
             </div>
 
             <div className="mt-6">
               <div className="grid overflow-hidden rounded-[20px] border border-white/12 bg-[#101820]/48 shadow-[0_18px_50px_rgb(0_0_0/0.18)] backdrop-blur-md sm:grid-cols-3">
-                {companyStats.map((stat, index) => {
+                {stats.map((stat, index) => {
                   const Icon = statIcons[index] ?? Award;
 
                   return (
@@ -99,7 +102,7 @@ export function HeroActionPanel() {
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3 text-sm font-semibold text-white">
-                <span>Ver catálogos por sector</span>
+                <span>{labels.panelFooter}</span>
                 <ArrowRight size={16} className="text-[#9fc6f0]" />
               </div>
             </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { XCircle } from "lucide-react";
 import { prisma } from "@/lib/db/prisma";
+import { getCurrentDictionary } from "@/lib/i18n/locale";
 
 export const metadata = {
   title: "Pago cancelado",
@@ -14,6 +15,8 @@ type CheckoutCancelledPageProps = {
 
 export default async function CheckoutCancelledPage({ searchParams }: CheckoutCancelledPageProps) {
   const params = await searchParams;
+  const dictionary = await getCurrentDictionary();
+
   if (params?.order) {
     await prisma.order.updateMany({
       where: {
@@ -32,16 +35,16 @@ export default async function CheckoutCancelledPage({ searchParams }: CheckoutCa
       <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-50 text-red-700">
         <XCircle size={34} />
       </div>
-      <h1 className="mt-6 text-4xl font-semibold tracking-tight">Pago cancelado</h1>
+      <h1 className="mt-6 text-4xl font-semibold tracking-tight">{dictionary.checkout.cancelledTitle}</h1>
       <p className="mt-4 text-base leading-7 text-[#62615d]">
-        No se ha realizado ningún cargo. Puedes volver al carrito, revisar los productos y finalizar la compra cuando quieras.
+        {dictionary.checkout.cancelledText}
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link href="/cart" className="premium-focus inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[#151515] px-5 text-sm font-semibold text-white" style={{ color: "#ffffff" }}>
-          Volver al carrito
+          {dictionary.checkout.backCart}
         </Link>
         <Link href="/" className="premium-focus inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-5 text-sm font-semibold">
-          Seguir comprando
+          {dictionary.cart.keepShopping}
         </Link>
       </div>
     </main>

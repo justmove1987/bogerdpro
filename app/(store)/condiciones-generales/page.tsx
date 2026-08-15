@@ -21,6 +21,7 @@ export default function GeneralTermsPage() {
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
+        <p className="mt-6 text-sm text-[var(--muted)]">Última actualización: {generalTerms.updatedAt}</p>
         <div className="mt-6 rounded-[var(--radius-sm)] border border-[var(--line)] bg-white p-5 text-sm leading-6 text-[var(--muted)]">
           {generalTerms.company.map((item) => (
             <p key={item}>{item}</p>

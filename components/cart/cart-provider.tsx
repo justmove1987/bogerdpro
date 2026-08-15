@@ -32,7 +32,7 @@ const storageKey = "bogerdpro-cart-v1";
 const CartContext = createContext<CartContextValue | null>(null);
 
 function clampQuantity(quantity: number, stock: number) {
-  return Math.max(1, Math.min(Math.floor(quantity), Math.max(1, stock)));
+  return Math.max(1, Math.min(Math.floor(quantity), Math.max(1, stock || 999)));
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {

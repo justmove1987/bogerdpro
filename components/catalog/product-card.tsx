@@ -1,7 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, CheckCircle2, ShoppingCart } from "lucide-react";
 import { formatPriceRange } from "@/lib/catalog/format";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 export type CatalogProductCard = {
   slug: string;
@@ -17,18 +18,17 @@ export type CatalogProductCard = {
   variants: { sku?: string; currency: string; stock: number }[];
 };
 
-export function ProductCard({ product }: { product: CatalogProductCard }) {
+export function ProductCard({ product, labels }: { product: CatalogProductCard; labels: Dictionary["catalog"] }) {
   const image = product.images[0];
   const firstVariant = product.variants[0];
-  const totalStock = product.variants.reduce((total, variant) => total + variant.stock, 0);
-  const availability = totalStock > 0 ? "En stock" : "Bajo pedido";
 
   return (
     <article className="group overflow-hidden rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white transition duration-200 hover:-translate-y-1 hover:border-[#cfc6b7] hover:shadow-[var(--shadow-soft)]">
       <Link href={`/product/${product.slug}`} className="premium-focus block rounded-[var(--radius-md)]">
         <div className="relative aspect-[4/3] overflow-hidden bg-[#efebe3]">
-          <Image
+          <ImageWithFallback
             src={image?.url ?? "/images/products/workwear-chaleco-casco.jpg"}
+            fallbackSrc="/images/products/workwear-chaleco-casco.jpg"
             alt={image?.alt ?? product.name}
             fill
             sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -36,7 +36,7 @@ export function ProductCard({ product }: { product: CatalogProductCard }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
           <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[var(--accent)] shadow-sm">
-            {availability}
+            {labels.onRequest}
           </span>
         </div>
         <div className="p-5">
@@ -45,11 +45,11 @@ export function ProductCard({ product }: { product: CatalogProductCard }) {
             <p className="text-xs text-[#62615d]">{product.sku ?? product.variants[0]?.sku ?? "-"}</p>
           </div>
           <h3 className="mt-3 min-h-14 text-lg font-semibold leading-7 text-[#151515]">{product.name}</h3>
-          <p className="mt-1 text-xs font-medium text-[#62615d]">{product.category?.name ?? "Producto profesional"}</p>
+          <p className="mt-1 text-xs font-medium text-[#62615d]">{product.category?.name ?? labels.professionalProduct}</p>
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#62615d]">{product.description}</p>
           <div className="mt-5 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-[#62615d]">Precio desde</p>
+              <p className="text-xs text-[#62615d]">{labels.fromPrice}</p>
               <p className="text-xl font-bold tracking-tight">
                 {formatPriceRange(product.minPriceCents, product.maxPriceCents, firstVariant?.currency)}
               </p>
@@ -60,7 +60,7 @@ export function ProductCard({ product }: { product: CatalogProductCard }) {
           </div>
           <div className="mt-4 flex items-center gap-2 border-t border-[#eee9df] pt-4 text-sm font-medium text-[#151515]">
             <CheckCircle2 size={16} className="text-[var(--accent)]" />
-            Ver variantes
+            {labels.viewVariants}
             <ArrowRight size={15} className="transition duration-200 group-hover:translate-x-1" />
           </div>
         </div>

@@ -34,16 +34,6 @@ export async function POST(request: Request) {
       return [{ variantId: item.variantId, message: "Uno de los productos ya no está disponible." }];
     }
 
-    if (variant.stock < item.quantity) {
-      return [
-        {
-          variantId: item.variantId,
-          message: `${variant.product.name} solo tiene ${variant.stock} unidades disponibles.`,
-          availableStock: variant.stock,
-        },
-      ];
-    }
-
     return [];
   });
 
@@ -53,7 +43,6 @@ export async function POST(request: Request) {
     items: variants.map((variant) => ({
       variantId: variant.id,
       sku: variant.sku,
-      stock: variant.stock,
       priceCents: variant.priceCents,
       currency: variant.currency,
       productName: variant.product.name,

@@ -3,8 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useRef, useTransition } from "react";
 import { Search, ScanLine } from "lucide-react";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
-export function VisualSearch({ defaultValue = "", actionPath = "/catalog" }: { defaultValue?: string; actionPath?: string }) {
+export function VisualSearch({
+  defaultValue = "",
+  actionPath = "/catalog",
+  labels,
+}: {
+  defaultValue?: string;
+  actionPath?: string;
+  labels: Dictionary["search"];
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [, startTransition] = useTransition();
@@ -26,7 +35,7 @@ export function VisualSearch({ defaultValue = "", actionPath = "/catalog" }: { d
   return (
     <form onSubmit={handleSubmit} action={actionPath} className="rounded-[var(--radius-md)] border border-[#d8d1c5] bg-white p-2 shadow-[0_16px_50px_rgb(21_21_21/0.08)]">
       <label className="sr-only" htmlFor="catalog-search">
-        Buscar producto
+        {labels.label}
       </label>
       <div className="flex items-center gap-2">
         <Search size={22} className="ml-3 shrink-0 text-[var(--accent)]" />
@@ -36,11 +45,11 @@ export function VisualSearch({ defaultValue = "", actionPath = "/catalog" }: { d
           name="q"
           defaultValue={defaultValue}
           className="premium-focus h-12 min-w-0 flex-1 rounded-[var(--radius-sm)] bg-transparent text-base outline-none placeholder:text-[#8b8880]"
-          placeholder="Busca por producto, referencia, sector o catálogo"
+          placeholder={labels.placeholder}
         />
         <button className="premium-focus hidden h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-black sm:inline-flex" type="submit">
           <ScanLine size={17} />
-          Buscar
+          {labels.button}
         </button>
       </div>
     </form>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { getCurrentLocale } from "@/lib/i18n/locale";
 import { absoluteUrl, defaultSeo, getSiteUrl, siteName } from "@/lib/seo/site";
 import "./globals.css";
 
@@ -44,9 +45,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getCurrentLocale();
+
   return (
-    <html lang="es">
+    <html lang={locale}>
       <body suppressHydrationWarning>
         <SessionProvider>
           <CartProvider>{children}</CartProvider>

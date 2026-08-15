@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 import { DownloadableCatalogs } from "@/components/catalog/downloadable-catalogs";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { catalogCollections } from "@/config/site-content";
+import { getSiteContent } from "@/config/site-content";
+import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 import { absoluteUrl, siteName } from "@/lib/seo/site";
 
 export const metadata: Metadata = {
@@ -20,20 +21,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CatalogPage() {
+export default async function CatalogPage() {
+  const locale = await getCurrentLocale();
+  const dictionary = await getCurrentDictionary();
+  const siteContent = getSiteContent(locale);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
-      <Breadcrumbs items={[{ href: "/", label: "Inicio" }, { label: "Catálogos" }]} />
+      <Breadcrumbs items={[{ href: "/", label: dictionary.nav.home }, { label: dictionary.catalog.catalogs }]} />
       <div className="mt-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Vestuario laboral y EPI</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight">Catálogos</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">{dictionary.catalog.workwear}</p>
+        <h1 className="mt-2 text-4xl font-semibold tracking-tight">{dictionary.catalog.catalogs}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-[#62615d]">
-          Selecciona una colección para consultar y descargar catálogos profesionales por marca, sector y tipo de producto.
+          {dictionary.catalog.pageText}
         </p>
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {catalogCollections.map((item) => (
+        {siteContent.catalogCollections.map((item) => (
           <Link key={item.href} href={item.href} className="group overflow-hidden rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white transition duration-200 hover:-translate-y-1 hover:border-[var(--accent)] hover:shadow-[var(--shadow-soft)]">
             <div className="relative aspect-[4/3] overflow-hidden bg-[#e8edf4]">
               <Image
@@ -52,14 +57,14 @@ export default function CatalogPage() {
               <h2 className="text-base font-semibold">{item.title}</h2>
               <p className="mt-2 text-sm leading-6 text-[#62615d]">{item.description}</p>
               <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#151515] group-hover:text-[var(--accent)]">
-                Ver más <ArrowRight size={15} />
+                {dictionary.catalog.viewMore} <ArrowRight size={15} />
               </span>
             </div>
           </Link>
         ))}
       </div>
 
-      <DownloadableCatalogs />
+      <DownloadableCatalogs labels={dictionary.catalog} />
     </div>
   );
 }

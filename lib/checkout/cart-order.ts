@@ -60,9 +60,6 @@ export async function prepareCartOrder(items: CheckoutCartItem[]): Promise<Prepa
       return { error: "La cantidad máxima por producto es 99 unidades." };
     }
 
-    if (variant.stock < item.quantity) {
-      return { error: `${variant.product.name} solo tiene ${variant.stock} unidades disponibles.` };
-    }
   }
 
   const orderItems = cartItems.map((item) => {

@@ -5,6 +5,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { DownloadableCatalogs } from "@/components/catalog/downloadable-catalogs";
 import { downloadableCatalogSections } from "@/config/downloadable-catalogs";
+import { getCurrentDictionary } from "@/lib/i18n/locale";
 import { absoluteUrl, siteName } from "@/lib/seo/site";
 
 const findSection = (slug: string) => downloadableCatalogSections.find((section) => section.slug === slug);
@@ -45,6 +46,7 @@ export async function generateMetadata({ params }: CatalogSectionPageProps): Pro
 export default async function CatalogSectionPage({ params }: CatalogSectionPageProps) {
   const { slug } = await params;
   const section = findSection(slug);
+  const dictionary = await getCurrentDictionary();
 
   if (!section) {
     notFound();
@@ -53,7 +55,7 @@ export default async function CatalogSectionPage({ params }: CatalogSectionPageP
   return (
     <main className="border-b border-[#e7e2d8] bg-[#f7f5f0] pb-20 pt-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <Breadcrumbs items={[{ label: "Catálogos", href: "/catalog" }, { label: section.title }]} />
+        <Breadcrumbs items={[{ label: dictionary.catalog.catalogs, href: "/catalog" }, { label: section.title }]} />
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[0.74fr_1.26fr] lg:items-start">
           <div>
@@ -62,13 +64,13 @@ export default async function CatalogSectionPage({ params }: CatalogSectionPageP
               className="premium-focus inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-4 py-2 text-sm font-semibold text-[#151515] transition duration-200 hover:border-[var(--accent)] hover:text-[var(--accent)]"
             >
               <ArrowLeft size={16} />
-              Ver todos los catálogos
+              {dictionary.nav.viewAllCatalogs}
             </Link>
-            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">Catálogos por categoría</p>
+            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">{dictionary.catalog.categoryCatalogs}</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-6xl">{section.title}</h1>
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#d8d1c5] bg-white px-4 py-2 text-sm font-semibold text-[#151515]">
               <Download size={16} className="text-[var(--accent)]" />
-              {section.catalogs.length} catálogos disponibles
+              {section.catalogs.length} {dictionary.catalog.availableCatalogs}
             </div>
           </div>
           <div className="rounded-[28px] border border-[#e1e8f0] bg-white p-6 shadow-[0_18px_70px_rgb(16_24_32/0.06)] md:p-8">
@@ -81,10 +83,10 @@ export default async function CatalogSectionPage({ params }: CatalogSectionPageP
           </div>
         </div>
 
-        <DownloadableCatalogs sectionSlug={section.slug} showSectionIntro={false} />
+        <DownloadableCatalogs sectionSlug={section.slug} showSectionIntro={false} labels={dictionary.catalog} />
 
         <section className="mt-10 rounded-[24px] border border-[#dbe3ec] bg-white p-5 md:p-6">
-          <p className="text-sm font-semibold text-[#151515]">Otras categorías</p>
+          <p className="text-sm font-semibold text-[#151515]">{dictionary.catalog.otherCategories}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {downloadableCatalogSections.map((item) => (
               <Link
