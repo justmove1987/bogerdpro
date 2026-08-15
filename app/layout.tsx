@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
-      <body>
+      <body suppressHydrationWarning>
         <SessionProvider>
           <CartProvider>{children}</CartProvider>
         </SessionProvider>

@@ -3,42 +3,34 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, FileText, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ShoppingCart } from "lucide-react";
 import { formatPriceRange } from "@/lib/catalog/format";
 
 function formatMoney(cents: number, currency = "EUR") {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency }).format(cents / 100);
 }
 
+function cartPayload(items: ReturnType<typeof useCart>["items"]) {
+  return { items: items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })) };
+}
+
 export function CartView() {
   const { items, subtotalCents, totalCents, updateQuantity, removeItem, clearCart } = useCart();
   const [error, setError] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isRequestingQuote, setIsRequestingQuote] = useState(false);
 
   async function checkout() {
     setError("");
     setIsCheckingOut(true);
 
     try {
-      const validation = await fetch("/api/cart/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })) }),
-      });
-      const validationResult = await validation.json();
-
-      if (!validation.ok || validationResult.errors?.length) {
-        setError(validationResult.errors?.map((item: { message: string }) => item.message).join(" ") || "No se ha podido validar el stock.");
-        return;
-      }
-
       const checkoutResponse = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })) }),
+        body: JSON.stringify(cartPayload(items)),
       });
       const checkoutResult = await checkoutResponse.json();
 
@@ -55,6 +47,31 @@ export function CartView() {
     }
   }
 
+  async function requestQuote() {
+    setError("");
+    setIsRequestingQuote(true);
+
+    try {
+      const response = await fetch("/api/quote-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cartPayload(items)),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.orderNumber) {
+        setError(result.error ?? "No se ha podido enviar la solicitud.");
+        return;
+      }
+
+      window.location.href = `/checkout/solicitud?order=${encodeURIComponent(result.orderNumber)}`;
+    } catch {
+      setError("No se ha podido enviar la solicitud.");
+    } finally {
+      setIsRequestingQuote(false);
+    }
+  }
+
   if (!items.length) {
     return (
       <div className="mt-6">
@@ -67,8 +84,10 @@ export function CartView() {
     );
   }
 
+  const isBusy = isCheckingOut || isRequestingQuote;
+
   return (
-    <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
+    <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_380px]">
       <section className="grid gap-4">
         {items.map((item) => (
           <article key={item.variantId} className="grid gap-4 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-4 sm:grid-cols-[120px_1fr_auto]">
@@ -127,19 +146,33 @@ export function CartView() {
         </div>
         <div className="mt-5 border-t border-[#eee9df] pt-5">
           <div className="flex justify-between text-lg font-bold">
-            <span>Total</span>
+            <span>Total base</span>
             <span>{formatMoney(totalCents)}</span>
           </div>
           {error ? <p className="mt-4 rounded-[var(--radius-sm)] bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
           <button
             type="button"
             onClick={checkout}
-            disabled={isCheckingOut}
+            disabled={isBusy}
             className="premium-focus mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-5 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-50"
+            style={{ color: "#ffffff" }}
           >
-            {isCheckingOut ? "Validando stock..." : "Finalizar compra"} <ArrowRight size={17} />
+            <span style={{ color: "#ffffff" }}>{isCheckingOut ? "Redirigiendo a pago..." : "Pagar con tarjeta"}</span>
+            <ArrowRight size={17} color="#ffffff" />
           </button>
-          <button type="button" onClick={clearCart} className="mt-3 inline-flex w-full justify-center text-sm font-semibold text-[#62615d] hover:text-red-600">
+          <button
+            type="button"
+            onClick={requestQuote}
+            disabled={isBusy}
+            className="premium-focus mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-5 text-sm font-semibold text-[#151515] transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:opacity-50"
+          >
+            <FileText size={17} />
+            {isRequestingQuote ? "Enviando solicitud..." : "Solicitar condiciones especiales"}
+          </button>
+          <p className="mt-3 text-xs leading-5 text-[#62615d]">
+            Para empresas con descuentos o condiciones especiales. Enviaremos la comanda al administrador para revisar precios, stock y condiciones antes del pago.
+          </p>
+          <button type="button" onClick={clearCart} className="mt-4 inline-flex w-full justify-center text-sm font-semibold text-[#62615d] hover:text-red-600">
             Vaciar carrito
           </button>
           <Link href="/catalog" className="mt-4 inline-flex w-full justify-center text-sm font-semibold text-[var(--accent)]">

@@ -90,16 +90,6 @@ export const downloadableCatalogSections: DownloadableCatalogSection[] = [
         href: "https://drive.google.com/uc?export=download&id=1FHZXHKUgz9YC6B2qblMtkuNS0WXiDls5",
       },
       {
-        brand: "Makito",
-        title: "Catálogo Makito",
-        description:
-          "Artículos promocionales y vestuario corporativo enfocado en personalización, campañas publicitarias, eventos e imagen de marca.",
-        image: "/images/logos/makito-300x129.jpg",
-        imageAlt: "Logo Makito",
-        imageMode: "contain",
-        href: "https://drive.google.com/uc?export=download&id=1dhqMoxVrPMYppAEI9-4nnNXldlix9ign",
-      },
-      {
         brand: "Mukua",
         title: "Catálogo Mukua",
         description:
@@ -158,16 +148,6 @@ export const downloadableCatalogSections: DownloadableCatalogSection[] = [
         imageAlt: "Logo Skechers",
         imageMode: "contain",
         href: "https://drive.google.com/uc?export=download&id=1NjRVQEC0SWTrXldNnTiE-mC0VWOdDIIT",
-      },
-      {
-        brand: "Stamina",
-        title: "Catálogo Stamina",
-        description:
-          "Vestuario promocional y artículos publicitarios para reforzar la imagen de marca en campañas, ferias y eventos.",
-        image: "/images/logos/sta.jpg",
-        imageAlt: "Logo Stamina",
-        imageMode: "contain",
-        href: "https://drive.google.com/uc?export=download&id=1wDceeGMdRgngYm7U8USWCvd3CKy--KU1",
       },
       {
         brand: "Tenson",

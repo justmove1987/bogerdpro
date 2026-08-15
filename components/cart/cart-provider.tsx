@@ -40,17 +40,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CartItem[];
-        setItems(Array.isArray(parsed) ? parsed : []);
+    const timer = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored) as CartItem[];
+          setItems(Array.isArray(parsed) ? parsed : []);
+        }
+      } catch {
+        setItems([]);
+      } finally {
+        setReady(true);
       }
-    } catch {
-      setItems([]);
-    } finally {
-      setReady(true);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

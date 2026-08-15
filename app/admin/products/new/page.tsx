@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
-  const [categories, brands] = await Promise.all([
+  const [categories, brands] = await prisma.$transaction([
     prisma.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);

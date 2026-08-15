@@ -24,6 +24,8 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
     notFound();
   }
 
+  const isQuoteRequest = !order.stripeCheckoutSession && order.paymentStatus === "PENDING";
+
   return (
     <div>
       <Link href="/admin/orders" className="text-sm font-semibold text-[var(--accent)]">Volver a pedidos</Link>
@@ -49,6 +51,12 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           </div>
         </form>
       </div>
+
+      {isQuoteRequest ? (
+        <div className="mt-5 rounded-[var(--radius-md)] border border-[#bcd7f2] bg-[#eef6ff] p-4 text-sm leading-6 text-[#1f4d7a]">
+          Esta comanda se ha generado como solicitud B2B. Revisa descuentos, disponibilidad y condiciones especiales antes de confirmarla o solicitar el pago al cliente.
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]">
         <section className="rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">

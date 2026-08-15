@@ -30,7 +30,8 @@ export const metadata: Metadata = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const homeSearchParams = await searchParams;
   const selected = parseCatalogSearchParams(homeSearchParams);
-  const [filters, catalog] = await Promise.all([getCatalogFilters(), getCatalogProducts(selected)]);
+  const filters = await getCatalogFilters();
+  const catalog = await getCatalogProducts(selected);
 
   return (
     <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import { formatPriceRange } from "@/lib/catalog/format";
@@ -34,11 +34,14 @@ export function ProductPurchasePanel({ product, variants }: ProductPurchasePanel
   const { addItem } = useCart();
 
   const selectedVariant = variants.find((variant) => variant.id === selectedVariantId) ?? firstVariant;
-  const colors = useMemo(() => [...new Set(variants.flatMap((variant) => (variant.color ? [variant.color] : [])))], [variants]);
-  const sizes = useMemo(
-    () => [...new Set(variants.filter((variant) => !selectedVariant?.color || variant.color === selectedVariant.color).flatMap((variant) => (variant.size ? [variant.size] : [])))],
-    [selectedVariant?.color, variants],
-  );
+  const colors = [...new Set(variants.flatMap((variant) => (variant.color ? [variant.color] : [])))];
+  const sizes = [
+    ...new Set(
+      variants
+        .filter((variant) => !selectedVariant?.color || variant.color === selectedVariant.color)
+        .flatMap((variant) => (variant.size ? [variant.size] : [])),
+    ),
+  ];
 
   function selectByColor(color: string) {
     const match = variants.find((variant) => variant.color === color && (!selectedVariant?.size || variant.size === selectedVariant.size)) ?? variants.find((variant) => variant.color === color);

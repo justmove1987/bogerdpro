@@ -11,7 +11,7 @@ type ProductEditPageProps = {
 
 export default async function ProductEditPage({ params }: ProductEditPageProps) {
   const { id } = await params;
-  const [product, categories, brands] = await Promise.all([
+  const [product, categories, brands] = await prisma.$transaction([
     prisma.product.findUnique({
       where: { id },
       include: {

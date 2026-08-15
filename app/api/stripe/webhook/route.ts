@@ -12,7 +12,7 @@ async function markOrderAsPaid(session: Stripe.Checkout.Session) {
     throw new Error("Stripe session is missing orderId metadata.");
   }
 
-  const paidOrder = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id: orderId },
       include: { items: true },
@@ -23,7 +23,7 @@ async function markOrderAsPaid(session: Stripe.Checkout.Session) {
     }
 
     if (order.paymentStatus === "PAID") {
-      return order;
+      return { order, shouldSendEmails: false };
     }
 
     for (const item of order.items) {
@@ -44,7 +44,7 @@ async function markOrderAsPaid(session: Stripe.Checkout.Session) {
       }
     }
 
-    return tx.order.update({
+    const paidOrder = await tx.order.update({
       where: { id: order.id },
       data: {
         status: "PAID",
@@ -56,9 +56,13 @@ async function markOrderAsPaid(session: Stripe.Checkout.Session) {
       },
       include: { items: true },
     });
+
+    return { order: paidOrder, shouldSendEmails: true };
   });
 
-  await sendOrderPaidEmails(paidOrder);
+  if (result.shouldSendEmails) {
+    await sendOrderPaidEmails(result.order);
+  }
 }
 
 async function markOrderAsFailed(session: Stripe.Checkout.Session) {
@@ -71,7 +75,10 @@ async function markOrderAsFailed(session: Stripe.Checkout.Session) {
       paymentStatus: "PENDING",
     },
     data: {
+      status: "CANCELLED",
       paymentStatus: "FAILED",
+      stripeCheckoutSession: session.id,
+      stripePaymentIntent: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id,
     },
   });
 }
@@ -98,12 +105,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (event.type === "checkout.session.completed") {
-      await markOrderAsPaid(event.data.object);
-    }
-
-    if (event.type === "checkout.session.expired") {
-      await markOrderAsFailed(event.data.object);
+    switch (event.type) {
+      case "checkout.session.completed":
+        await markOrderAsPaid(event.data.object);
+        break;
+      case "checkout.session.async_payment_failed":
+      case "checkout.session.expired":
+        await markOrderAsFailed(event.data.object);
+        break;
+      default:
+        break;
     }
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Webhook processing failed." }, { status: 500 });

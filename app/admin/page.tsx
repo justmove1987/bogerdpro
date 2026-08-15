@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const [products, activeProducts, categories, brands, orders, pendingOrders, imports] = await Promise.all([
+  const [products, activeProducts, categories, brands, orders, pendingOrders, imports] = await prisma.$transaction([
     prisma.product.count(),
     prisma.product.count({ where: { isActive: true } }),
     prisma.category.count(),

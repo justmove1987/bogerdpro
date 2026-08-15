@@ -99,6 +99,38 @@ export async function sendAdminOrderNotificationEmail(order: OrderWithItems) {
   });
 }
 
+export async function sendAdminQuoteRequestEmail(order: OrderWithItems) {
+  const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL ?? process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  const html = emailShell(
+    `Solicitud B2B pendiente: ${order.orderNumber}`,
+    `
+      <p style="margin:0 0 18px;line-height:1.6;color:#62615d;">El cliente ha solicitado revisión de condiciones especiales, descuentos o disponibilidad antes de pagar.</p>
+      <p style="margin:0 0 18px;line-height:1.6;color:#62615d;">Cliente: ${order.customerName ?? "-"} · ${order.email}</p>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="background:#f7f5f0;color:#62615d;">
+            <th style="padding:12px;text-align:left;">Producto</th>
+            <th style="padding:12px;text-align:left;">SKU</th>
+            <th style="padding:12px;text-align:center;">Cantidad</th>
+            <th style="padding:12px;text-align:right;">Importe base</th>
+          </tr>
+        </thead>
+        <tbody>${orderRows(order)}</tbody>
+      </table>
+      <p style="margin:22px 0 0;text-align:right;font-size:18px;font-weight:700;">Subtotal base: ${money(order.totalCents, order.currency)}</p>
+    `,
+  );
+
+  return sendTransactionalEmail({
+    to: adminEmail,
+    subject: `Solicitud B2B pendiente ${order.orderNumber}`,
+    html,
+    text: `Solicitud B2B pendiente ${order.orderNumber}. Subtotal base: ${money(order.totalCents, order.currency)}.`,
+  });
+}
+
 export async function sendOrderPaidEmails(order: OrderWithItems) {
   const results = await Promise.allSettled([
     sendOrderConfirmationEmail(order),
@@ -110,4 +142,9 @@ export async function sendOrderPaidEmails(order: OrderWithItems) {
       console.error("[email:error]", result.reason);
     }
   });
+}
+
+export async function sendQuoteRequestEmails(order: OrderWithItems) {
+  const result = await sendAdminQuoteRequestEmail(order);
+  return result;
 }

@@ -24,37 +24,42 @@ export default async function AdminOrdersPage() {
               <th className="px-4 py-3">Cliente</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3">Pago</th>
-              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3">Total base</th>
               <th className="px-4 py-3">Líneas</th>
               <th className="px-4 py-3 text-right">Acción</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className="border-t border-[#e7e2d8]">
-                <td className="px-4 py-3 font-semibold">
-                  <Link href={`/admin/orders/${order.id}`} className="hover:text-[var(--accent)]">
-                    {order.orderNumber}
-                  </Link>
-                  <p className="mt-1 text-xs font-normal text-[#62615d]">{order.createdAt.toLocaleDateString("es-ES")}</p>
-                </td>
-                <td className="px-4 py-3 text-[#62615d]">
-                  <p className="font-medium text-[#151515]">{order.customerName ?? order.customer?.companyName ?? "Cliente"}</p>
-                  <p className="mt-1 text-xs">{order.email}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="rounded-full bg-[#eef5ff] px-2 py-1 text-xs font-semibold text-[var(--accent)]">{orderStatusLabels[order.status]}</span>
-                </td>
-                <td className="px-4 py-3 text-[#62615d]">{paymentStatusLabels[order.paymentStatus]}</td>
-                <td className="px-4 py-3 font-semibold">{formatOrderMoney(order.totalCents, order.currency)}</td>
-                <td className="px-4 py-3 text-[#62615d]">{order.items.length}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-[var(--accent)]">
-                    Ver detalle
-                  </Link>
-                </td>
-              </tr>
-            ))}
+            {orders.map((order) => {
+              const isQuoteRequest = !order.stripeCheckoutSession && order.paymentStatus === "PENDING";
+
+              return (
+                <tr key={order.id} className="border-t border-[#e7e2d8]">
+                  <td className="px-4 py-3 font-semibold">
+                    <Link href={`/admin/orders/${order.id}`} className="hover:text-[var(--accent)]">
+                      {order.orderNumber}
+                    </Link>
+                    <p className="mt-1 text-xs font-normal text-[#62615d]">{order.createdAt.toLocaleDateString("es-ES")}</p>
+                    {isQuoteRequest ? <p className="mt-1 text-xs font-semibold text-[var(--accent)]">Solicitud B2B</p> : null}
+                  </td>
+                  <td className="px-4 py-3 text-[#62615d]">
+                    <p className="font-medium text-[#151515]">{order.customerName ?? order.customer?.companyName ?? "Cliente"}</p>
+                    <p className="mt-1 text-xs">{order.email}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="rounded-full bg-[#eef5ff] px-2 py-1 text-xs font-semibold text-[var(--accent)]">{orderStatusLabels[order.status]}</span>
+                  </td>
+                  <td className="px-4 py-3 text-[#62615d]">{isQuoteRequest ? "Pendiente de revisión" : paymentStatusLabels[order.paymentStatus]}</td>
+                  <td className="px-4 py-3 font-semibold">{formatOrderMoney(order.totalCents, order.currency)}</td>
+                  <td className="px-4 py-3 text-[#62615d]">{order.items.length}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-[var(--accent)]">
+                      Ver detalle
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
             {orders.length === 0 ? (
               <tr>
                 <td className="px-4 py-8 text-center text-sm text-[#62615d]" colSpan={7}>

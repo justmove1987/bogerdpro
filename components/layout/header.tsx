@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronDown, Menu, ShoppingCart, UserRound, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { catalogCollections } from "@/config/site-content";
-import { locales } from "@/config/i18n";
 import { useCart } from "@/components/cart/cart-provider";
+import { locales } from "@/config/i18n";
+import { catalogCollections } from "@/config/site-content";
 
 const menuCollections = catalogCollections;
 
@@ -17,6 +17,7 @@ export function Header() {
   const [megaOpen, setMegaOpen] = useState(false);
   const { data: session } = useSession();
   const { count } = useCart();
+  const isLoggedIn = Boolean(session?.user);
   const isAdmin = session?.user?.role === "ADMIN";
 
   return (
@@ -110,8 +111,16 @@ export function Header() {
             <ShoppingCart size={20} />
             <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white">{count}</span>
           </Link>
-          <Link href={session?.user ? "/cuenta" : "/login"} aria-label={session?.user ? "Mi cuenta" : "Iniciar sesion"} className="premium-focus rounded-[var(--radius-sm)] p-2 transition hover:bg-white">
+          <Link
+            href={isLoggedIn ? "/cuenta" : "/login"}
+            aria-label={isLoggedIn ? "Mi cuenta. Sesión iniciada" : "Iniciar sesión. Sesión no iniciada"}
+            className="premium-focus relative rounded-[var(--radius-sm)] p-2 transition hover:bg-white"
+          >
             <UserRound size={20} />
+            <span
+              aria-hidden="true"
+              className={`absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white ${isLoggedIn ? "bg-emerald-500" : "bg-red-500"}`}
+            />
           </Link>
         </div>
 
@@ -119,7 +128,7 @@ export function Header() {
           className="premium-focus rounded-[var(--radius-sm)] p-2 lg:hidden"
           type="button"
           onClick={() => setMenuOpen((value) => !value)}
-          aria-label="Abrir menu"
+          aria-label="Abrir menú"
         >
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -139,8 +148,9 @@ export function Header() {
             <Link href="/contacto" className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
               Contacto
             </Link>
-            <Link href={session?.user ? "/cuenta" : "/login"} className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
-              {session?.user ? "Mi cuenta" : "Iniciar sesión"}
+            <Link href={isLoggedIn ? "/cuenta" : "/login"} className="flex items-center justify-between rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">
+              <span>{isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}</span>
+              <span className={`h-2.5 w-2.5 rounded-full ${isLoggedIn ? "bg-emerald-500" : "bg-red-500"}`} aria-label={isLoggedIn ? "Sesión iniciada" : "Sesión no iniciada"} />
             </Link>
             {isAdmin ? (
               <Link href="/admin" className="rounded-[var(--radius-sm)] px-3 py-3 text-sm font-semibold text-[#151515]">

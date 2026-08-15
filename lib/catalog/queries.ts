@@ -166,7 +166,7 @@ export async function getCatalogProducts(filters: CatalogSearchParams) {
 }
 
 export async function getCatalogFilters() {
-  const [categories, brands, colors, sizes, attributes] = await Promise.all([
+  const [categories, brands, colors, sizes, attributes] = await prisma.$transaction([
     prisma.category.findMany({
       orderBy: [{ parentId: "asc" }, { name: "asc" }],
       select: {
