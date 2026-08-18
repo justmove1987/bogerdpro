@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
+import { defaultLocale, type Locale } from "@/config/i18n";
+import { colorGroupKeys, sizeGroupKeys } from "@/lib/catalog/filter-groups";
 
 export const PRODUCTS_PER_PAGE = 12;
 
@@ -8,6 +10,8 @@ export type CatalogSearchParams = {
   brand?: string[];
   color?: string[];
   size?: string[];
+  gender?: string[];
+  material?: string[];
   attribute?: string[];
   minPrice?: number;
   maxPrice?: number;
@@ -40,6 +44,8 @@ export function parseCatalogSearchParams(params: SearchParamsInput): CatalogSear
     brand: arrayParam(params.brand),
     color: arrayParam(params.color),
     size: arrayParam(params.size),
+    gender: arrayParam(params.gender),
+    material: arrayParam(params.material),
     attribute: arrayParam(params.attribute),
     minPrice: numberParam(params.minPrice),
     maxPrice: numberParam(params.maxPrice),
@@ -48,11 +54,46 @@ export function parseCatalogSearchParams(params: SearchParamsInput): CatalogSear
   };
 }
 
-function buildProductWhere(filters: CatalogSearchParams) {
+function localizedText<T extends { translations?: { name?: string; description?: string | null; value?: string }[] }>(item: T, field: "name" | "description" | "value") {
+  return item.translations?.[0]?.[field] ?? item[field as keyof T];
+}
+
+function localizeCategory<T extends { name: string; description?: string | null; translations?: { name: string; description?: string | null }[] } | null>(category: T) {
+  if (!category) return category;
+  return {
+    ...category,
+    name: localizedText(category, "name") as string,
+    description: localizedText(category, "description") as string | null | undefined,
+  };
+}
+
+function localizeBrand<T extends { name: string; translations?: { name: string }[] } | null>(brand: T) {
+  if (!brand) return brand;
+  return {
+    ...brand,
+    name: localizedText(brand, "name") as string,
+  };
+}
+
+function localizeProduct<T extends { name: string; description: string | null; translations?: { name: string; description?: string | null; metaTitle?: string | null; metaDescription?: string | null }[]; category?: any; brand?: any }>(product: T) {
+  const translation = product.translations?.[0];
+
+  return {
+    ...product,
+    name: translation?.name ?? product.name,
+    description: translation?.description ?? product.description,
+    metaTitle: translation?.metaTitle ?? ("metaTitle" in product ? product.metaTitle : undefined),
+    metaDescription: translation?.metaDescription ?? ("metaDescription" in product ? product.metaDescription : undefined),
+    category: localizeCategory(product.category),
+    brand: localizeBrand(product.brand),
+  };
+}
+
+function buildProductWhere(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
   const variantFilters = {
     isActive: true,
-    ...(filters.color?.length ? { color: { in: filters.color } } : {}),
-    ...(filters.size?.length ? { size: { in: filters.size } } : {}),
+    ...(filters.color?.length ? { colorGroup: { in: filters.color } } : {}),
+    ...(filters.size?.length ? { sizeGroup: { in: filters.size } } : {}),
     ...(typeof filters.minPrice === "number" || typeof filters.maxPrice === "number"
       ? {
           priceCents: {
@@ -70,6 +111,8 @@ function buildProductWhere(filters: CatalogSearchParams) {
     ...(typeof filters.maxPrice === "number" ? { minPriceCents: { lte: Math.round(filters.maxPrice * 100) } } : {}),
     ...(filters.category?.length ? { category: { slug: { in: filters.category } } } : {}),
     ...(filters.brand?.length ? { brand: { slug: { in: filters.brand } } } : {}),
+    ...(filters.gender?.length ? { gender: { in: filters.gender } } : {}),
+    ...(filters.material?.length ? { material: { in: filters.material } } : {}),
     ...(filters.attribute?.length
       ? {
           attributeValues: {
@@ -87,6 +130,21 @@ function buildProductWhere(filters: CatalogSearchParams) {
             { name: { contains: filters.q, mode: "insensitive" as const } },
             { sku: { contains: filters.q, mode: "insensitive" as const } },
             { description: { contains: filters.q, mode: "insensitive" as const } },
+            ...(locale === defaultLocale
+              ? []
+              : [
+                  {
+                    translations: {
+                      some: {
+                        locale,
+                        OR: [
+                          { name: { contains: filters.q, mode: "insensitive" as const } },
+                          { description: { contains: filters.q, mode: "insensitive" as const } },
+                        ],
+                      },
+                    },
+                  },
+                ]),
             {
               variants: {
                 some: {
@@ -108,8 +166,8 @@ function productOrderBy(sort: CatalogSearchParams["sort"]) {
   return [{ isFeatured: "desc" as const }, { createdAt: "desc" as const }];
 }
 
-export async function getCatalogProducts(filters: CatalogSearchParams) {
-  const where = buildProductWhere(filters);
+export async function getCatalogProducts(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
+  const where = buildProductWhere(filters, locale);
   const skip = (filters.page - 1) * PRODUCTS_PER_PAGE;
 
   const total = await prisma.product.count({ where });
@@ -127,8 +185,9 @@ export async function getCatalogProducts(filters: CatalogSearchParams) {
       isFeatured: true,
       minPriceCents: true,
       maxPriceCents: true,
-      category: { select: { name: true, slug: true } },
-      brand: { select: { name: true, slug: true } },
+      translations: { where: { locale }, take: 1, select: { name: true, description: true, metaTitle: true, metaDescription: true } },
+      category: { select: { id: true, name: true, slug: true, translations: { where: { locale }, take: 1, select: { name: true, description: true } } } },
+      brand: { select: { id: true, name: true, slug: true, translations: { where: { locale }, take: 1, select: { name: true } } } },
       images: {
         orderBy: { position: "asc" },
         take: 1,
@@ -137,8 +196,8 @@ export async function getCatalogProducts(filters: CatalogSearchParams) {
       variants: {
         where: {
           isActive: true,
-          ...(filters.color?.length ? { color: { in: filters.color } } : {}),
-          ...(filters.size?.length ? { size: { in: filters.size } } : {}),
+          ...(filters.color?.length ? { colorGroup: { in: filters.color } } : {}),
+          ...(filters.size?.length ? { sizeGroup: { in: filters.size } } : {}),
         },
         orderBy: { priceCents: filters.sort === "price-desc" ? "desc" : "asc" },
         take: 6,
@@ -155,7 +214,7 @@ export async function getCatalogProducts(filters: CatalogSearchParams) {
   });
 
   return {
-    products,
+    products: products.map(localizeProduct),
     total,
     page: filters.page,
     pageCount: Math.max(1, Math.ceil(total / PRODUCTS_PER_PAGE)),
@@ -170,12 +229,15 @@ export async function getCatalogFilters() {
   });
 }
 
-export async function getCatalogFiltersForSearch(filters: CatalogSearchParams) {
-  const facetWhere = buildProductWhere({
-    page: 1,
-    sort: "relevance",
-    q: filters.q,
-  });
+export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
+  const facetWhere = buildProductWhere(
+    {
+      ...filters,
+      page: 1,
+      sort: "relevance",
+    },
+    locale,
+  );
 
   const categories = await prisma.category.findMany({
     orderBy: [{ parentId: "asc" }, { name: "asc" }],
@@ -184,6 +246,7 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams) {
       name: true,
       slug: true,
       parentId: true,
+      translations: { where: { locale }, take: 1, select: { name: true, description: true } },
       _count: { select: { products: { where: facetWhere } } },
     },
   });
@@ -192,20 +255,33 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams) {
     select: {
       name: true,
       slug: true,
+      translations: { where: { locale }, take: 1, select: { name: true } },
       _count: { select: { products: { where: facetWhere } } },
     },
   });
   const colors = await prisma.productVariant.findMany({
-    where: { isActive: true, product: facetWhere, color: { not: null } },
-    distinct: ["color"],
-    orderBy: { color: "asc" },
-    select: { color: true },
+    where: { isActive: true, product: facetWhere, colorGroup: { not: null } },
+    distinct: ["colorGroup"],
+    orderBy: { colorGroup: "asc" },
+    select: { colorGroup: true },
   });
   const sizes = await prisma.productVariant.findMany({
-    where: { isActive: true, product: facetWhere, size: { not: null } },
-    distinct: ["size"],
-    orderBy: { size: "asc" },
-    select: { size: true },
+    where: { isActive: true, product: facetWhere, sizeGroup: { not: null } },
+    distinct: ["sizeGroup"],
+    orderBy: { sizeGroup: "asc" },
+    select: { sizeGroup: true },
+  });
+  const genders = await prisma.product.findMany({
+    where: { ...facetWhere, gender: { not: null } },
+    distinct: ["gender"],
+    orderBy: { gender: "asc" },
+    select: { gender: true },
+  });
+  const materials = await prisma.product.findMany({
+    where: { ...facetWhere, material: { not: null } },
+    distinct: ["material"],
+    orderBy: { material: "asc" },
+    select: { material: true },
   });
   const attributes = await prisma.attribute.findMany({
     orderBy: { name: "asc" },
@@ -227,16 +303,18 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams) {
   });
 
   return {
-    categories: categories.filter((category) => category._count.products > 0),
-    brands: brands.filter((brand) => brand._count.products > 0),
-    colors: colors.flatMap((item) => (item.color ? [item.color] : [])),
-    sizes: sizes.flatMap((item) => (item.size ? [item.size] : [])),
+    categories: categories.filter((category) => category._count.products > 0).map(localizeCategory),
+    brands: brands.filter((brand) => brand._count.products > 0).map(localizeBrand),
+    colors: colorGroupKeys.filter((key) => colors.some((item) => item.colorGroup === key)),
+    sizes: sizeGroupKeys.filter((key) => sizes.some((item) => item.sizeGroup === key)),
+    genders: genders.flatMap((item) => (item.gender ? [item.gender] : [])),
+    materials: materials.flatMap((item) => (item.material ? [item.material] : [])),
     attributes: attributes.filter((attribute) => attribute.values.length > 0),
   };
 }
 
-export async function getFeaturedProducts(take = 3) {
-  return prisma.product.findMany({
+export async function getFeaturedProducts(take = 3, locale: Locale = defaultLocale) {
+  const products = await prisma.product.findMany({
     where: { isActive: true, status: "ACTIVE", isFeatured: true },
     orderBy: { createdAt: "desc" },
     take,
@@ -249,8 +327,9 @@ export async function getFeaturedProducts(take = 3) {
       isFeatured: true,
       minPriceCents: true,
       maxPriceCents: true,
-      category: { select: { name: true, slug: true } },
-      brand: { select: { name: true, slug: true } },
+      translations: { where: { locale }, take: 1, select: { name: true, description: true, metaTitle: true, metaDescription: true } },
+      category: { select: { id: true, name: true, slug: true, translations: { where: { locale }, take: 1, select: { name: true, description: true } } } },
+      brand: { select: { id: true, name: true, slug: true, translations: { where: { locale }, take: 1, select: { name: true } } } },
       images: { orderBy: { position: "asc" }, take: 1, select: { url: true, alt: true } },
       variants: {
         where: { isActive: true },
@@ -260,28 +339,52 @@ export async function getFeaturedProducts(take = 3) {
       },
     },
   });
+
+  return products.map(localizeProduct);
 }
 
-export async function getProductBySlug(slug: string) {
-  return prisma.product.findFirst({
+export async function getProductBySlug(slug: string, locale: Locale = defaultLocale) {
+  const product = await prisma.product.findFirst({
     where: { slug, isActive: true, status: "ACTIVE" },
     include: {
-      category: true,
-      brand: true,
+      translations: { where: { locale }, take: 1 },
+      category: { include: { translations: { where: { locale }, take: 1 } } },
+      brand: { include: { translations: { where: { locale }, take: 1 } } },
       images: { orderBy: { position: "asc" } },
+      documents: { orderBy: { position: "asc" } },
       variants: { where: { isActive: true }, orderBy: [{ priceCents: "asc" }, { size: "asc" }] },
       attributeValues: {
         include: {
           attributeValue: {
-            include: { attribute: true },
+            include: {
+              translations: { where: { locale }, take: 1 },
+              attribute: { include: { translations: { where: { locale }, take: 1 } } },
+            },
           },
         },
       },
     },
   });
+
+  if (!product) return null;
+
+  return {
+    ...localizeProduct(product),
+    attributeValues: product.attributeValues.map((item) => ({
+      ...item,
+      attributeValue: {
+        ...item.attributeValue,
+        value: localizedText(item.attributeValue, "value") as string,
+        attribute: {
+          ...item.attributeValue.attribute,
+          name: localizedText(item.attributeValue.attribute, "name") as string,
+        },
+      },
+    })),
+  };
 }
 
-export async function getRelatedProducts(product: { id: string; categoryId: string | null; brandId: string | null }, take = 3) {
+export async function getRelatedProducts(product: { id: string; categoryId: string | null; brandId: string | null }, take = 3, locale: Locale = defaultLocale) {
   const relatedConditions = [
     ...(product.categoryId ? [{ categoryId: product.categoryId }] : []),
     ...(product.brandId ? [{ brandId: product.brandId }] : []),
@@ -291,7 +394,7 @@ export async function getRelatedProducts(product: { id: string; categoryId: stri
     return [];
   }
 
-  return prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where: {
       id: { not: product.id },
       isActive: true,
@@ -309,8 +412,9 @@ export async function getRelatedProducts(product: { id: string; categoryId: stri
       isFeatured: true,
       minPriceCents: true,
       maxPriceCents: true,
-      category: { select: { name: true, slug: true } },
-      brand: { select: { name: true, slug: true } },
+      translations: { where: { locale }, take: 1, select: { name: true, description: true, metaTitle: true, metaDescription: true } },
+      category: { select: { id: true, name: true, slug: true, translations: { where: { locale }, take: 1, select: { name: true, description: true } } } },
+      brand: { select: { id: true, name: true, slug: true, translations: { where: { locale }, take: 1, select: { name: true } } } },
       images: { orderBy: { position: "asc" }, take: 1, select: { url: true, alt: true } },
       variants: {
         where: { isActive: true },
@@ -320,4 +424,6 @@ export async function getRelatedProducts(product: { id: string; categoryId: stri
       },
     },
   });
+
+  return products.map(localizeProduct);
 }

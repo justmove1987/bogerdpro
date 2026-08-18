@@ -8,7 +8,8 @@ type ImageWithFallbackProps = ImageProps & {
 };
 
 export function ImageWithFallback({ fallbackSrc, src, alt, ...props }: ImageWithFallbackProps) {
-  const [imageSrc, setImageSrc] = useState(src);
+  const [failedSrc, setFailedSrc] = useState<ImageProps["src"] | null>(null);
+  const imageSrc = failedSrc === src ? fallbackSrc : src;
 
-  return <Image {...props} src={imageSrc} alt={alt} onError={() => setImageSrc(fallbackSrc)} />;
+  return <Image {...props} src={imageSrc} alt={alt} onError={() => setFailedSrc(src)} />;
 }

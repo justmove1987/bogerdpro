@@ -218,6 +218,95 @@ export async function deleteBrand(formData: FormData) {
   revalidatePath("/admin/brands");
 }
 
+export async function saveUserProfile(formData: FormData) {
+  await requireAdmin();
+
+  const id = formString(formData, "id");
+  const name = formString(formData, "name") || null;
+  const email = formString(formData, "email").toLowerCase();
+  const companyName = formString(formData, "companyName") || null;
+  const phone = formString(formData, "phone") || null;
+  const taxId = formString(formData, "taxId") || null;
+
+  if (!id || !email) {
+    throw new Error("Usuario y email son obligatorios.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id },
+      data: { name, email },
+    });
+
+    const customer = await tx.customer.findUnique({ where: { userId: id }, select: { id: true } });
+
+    if (customer) {
+      await tx.customer.update({
+        where: { id: customer.id },
+        data: { email, firstName: name, companyName, phone, taxId },
+      });
+    } else {
+      await tx.customer.upsert({
+        where: { email },
+        update: { userId: id, email, companyName, phone, taxId },
+        create: { userId: id, email, firstName: name, companyName, phone, taxId },
+      });
+    }
+  });
+
+  revalidatePath("/admin/users");
+}
+
+export async function deleteUser(formData: FormData) {
+  const session = await requireAdmin();
+  const id = formString(formData, "id");
+
+  if (!id) {
+    throw new Error("Usuario obligatorio.");
+  }
+
+  if (session.user.id === id) {
+    throw new Error("No puedes borrar tu propio usuario administrador.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.order.updateMany({ where: { userId: id }, data: { userId: null } });
+    await tx.customer.updateMany({ where: { userId: id }, data: { userId: null } });
+    await tx.user.delete({ where: { id } });
+  });
+
+  revalidatePath("/admin/users");
+}
+
+export async function saveUserBrandDiscount(formData: FormData) {
+  await requireAdmin();
+
+  const userId = formString(formData, "userId");
+  const brandId = formString(formData, "brandId");
+  const percent = Math.max(0, Math.min(100, Math.floor(formNumber(formData, "percent") ?? 0)));
+
+  if (!userId || !brandId || percent <= 0) {
+    throw new Error("Selecciona usuario, marca y un porcentaje superior a 0.");
+  }
+
+  await prisma.userBrandDiscount.upsert({
+    where: { userId_brandId: { userId, brandId } },
+    update: { percent },
+    create: { userId, brandId, percent },
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/");
+}
+
+export async function deleteUserBrandDiscount(formData: FormData) {
+  await requireAdmin();
+  const id = formString(formData, "id");
+  await prisma.userBrandDiscount.delete({ where: { id } });
+  revalidatePath("/admin/users");
+  revalidatePath("/");
+}
+
 export async function updateOrderStatus(formData: FormData) {
   await requireAdmin();
   const id = formString(formData, "id");

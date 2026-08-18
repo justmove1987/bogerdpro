@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
+import { authOptions } from "@/lib/auth/options";
 import { prisma } from "@/lib/db/prisma";
+import { applyDiscountCents, normalizeDiscountPercent } from "@/lib/pricing/discounts";
 
 const validateCartSchema = z.object({
   items: z.array(
@@ -13,6 +16,7 @@ const validateCartSchema = z.object({
 
 export async function POST(request: Request) {
   const body = validateCartSchema.parse(await request.json());
+  const session = await getServerSession(authOptions);
   const variantIds = body.items.map((item) => item.variantId);
   const variants = await prisma.productVariant.findMany({
     where: {
@@ -22,11 +26,19 @@ export async function POST(request: Request) {
     },
     include: {
       product: {
-        select: { name: true, slug: true },
+        select: { name: true, slug: true, brandId: true },
       },
     },
   });
   const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
+  const brandIds = [...new Set(variants.flatMap((variant) => (variant.product.brandId ? [variant.product.brandId] : [])))];
+  const discounts = session?.user?.id
+    ? await prisma.userBrandDiscount.findMany({
+        where: { userId: session.user.id, brandId: { in: brandIds } },
+        select: { brandId: true, percent: true },
+      })
+    : [];
+  const discountsByBrandId = new Map(discounts.map((discount) => [discount.brandId, normalizeDiscountPercent(discount.percent)]));
 
   const errors = body.items.flatMap((item) => {
     const variant = variantsById.get(item.variantId);
@@ -40,13 +52,19 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: errors.length === 0,
     errors,
-    items: variants.map((variant) => ({
-      variantId: variant.id,
-      sku: variant.sku,
-      priceCents: variant.priceCents,
-      currency: variant.currency,
-      productName: variant.product.name,
-      productSlug: variant.product.slug,
-    })),
+    items: variants.map((variant) => {
+      const discountPercent = variant.product.brandId ? discountsByBrandId.get(variant.product.brandId) ?? null : null;
+
+      return {
+        variantId: variant.id,
+        sku: variant.sku,
+        priceCents: applyDiscountCents(variant.priceCents, discountPercent),
+        originalPriceCents: discountPercent ? variant.priceCents : null,
+        discountPercent,
+        currency: variant.currency,
+        productName: variant.product.name,
+        productSlug: variant.product.slug,
+      };
+    }),
   });
 }

@@ -20,7 +20,7 @@ const quoteRequestSchema = z.object({
 export async function POST(request: Request) {
   const body = quoteRequestSchema.parse(await request.json());
   const session = await getServerSession(authOptions);
-  const prepared = await prepareCartOrder(body.items);
+  const prepared = await prepareCartOrder(body.items, session?.user?.id);
 
   if ("error" in prepared) {
     return NextResponse.json({ error: prepared.error }, { status: 400 });
@@ -53,6 +53,8 @@ export async function POST(request: Request) {
           sku: item.sku,
           quantity: item.quantity,
           unitCents: item.unitCents,
+          originalUnitCents: item.originalUnitCents,
+          discountPercent: item.discountPercent,
           totalCents: item.totalCents,
         })),
       },

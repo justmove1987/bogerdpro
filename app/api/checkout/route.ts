@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const body = parsedBody.data;
   const session = await getServerSession(authOptions);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
-  const prepared = await prepareCartOrder(body.items);
+  const prepared = await prepareCartOrder(body.items, session?.user?.id);
 
   if ("error" in prepared) {
     return NextResponse.json({ error: prepared.error }, { status: 400 });
@@ -55,6 +55,8 @@ export async function POST(request: Request) {
           sku: item.sku,
           quantity: item.quantity,
           unitCents: item.unitCents,
+          originalUnitCents: item.originalUnitCents,
+          discountPercent: item.discountPercent,
           totalCents: item.totalCents,
         })),
       },

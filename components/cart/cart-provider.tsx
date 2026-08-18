@@ -12,6 +12,8 @@ export type CartItem = {
   color?: string | null;
   size?: string | null;
   priceCents: number;
+  originalPriceCents?: number | null;
+  discountPercent?: number | null;
   currency: string;
   stock: number;
   quantity: number;
@@ -100,7 +102,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems((current) => current.filter((item) => item.variantId !== variantId));
       },
       clearCart() {
-        setItems([]);
+        setItems((current) => (current.length ? [] : current));
       },
     };
   }, [items]);

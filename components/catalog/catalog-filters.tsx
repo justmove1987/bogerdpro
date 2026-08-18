@@ -22,6 +22,8 @@ type CatalogFiltersData = {
   }[];
   colors: string[];
   sizes: string[];
+  genders: string[];
+  materials: string[];
   attributes: {
     name: string;
     slug: string;
@@ -70,20 +72,44 @@ function CheckboxFilter({
   label,
   checked,
   count,
+  swatchClassName,
 }: {
   name: string;
   value: string;
   label: string;
   checked: boolean;
   count?: number;
+  swatchClassName?: string;
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] px-2 py-2 text-sm text-[#62615d] transition hover:bg-[#f7f5f0] hover:text-[#151515]">
       <input className="h-4 w-4 accent-[var(--accent)]" name={name} value={value} defaultChecked={checked} type="checkbox" />
+      {swatchClassName ? <span className={`h-4 w-4 shrink-0 rounded-full border border-[#d8d1c5] ${swatchClassName}`} /> : null}
       <span className="flex-1">{label}</span>
       {typeof count === "number" ? <span className="text-xs text-[#8b8880]">{count}</span> : null}
     </label>
   );
+}
+
+const colorSwatches: Record<string, string> = {
+  black: "bg-[#171717]",
+  white: "bg-white",
+  grey: "bg-[#8a8a8a]",
+  navy: "bg-[#172554]",
+  blue: "bg-[#2563eb]",
+  red: "bg-[#dc2626]",
+  green: "bg-[#16a34a]",
+  yellow: "bg-[#facc15]",
+  orange: "bg-[#f97316]",
+  pink: "bg-[#ec4899]",
+  purple: "bg-[#7e22ce]",
+  beige: "bg-[#c8b692]",
+  brown: "bg-[#7c4a2d]",
+  multicolor: "bg-[linear-gradient(135deg,#111_0_25%,#2563eb_25%_50%,#facc15_50%_75%,#dc2626_75%)]",
+};
+
+function groupLabel(labels: Record<string, string>, key: string) {
+  return labels[key] ?? key;
 }
 
 export function CatalogFilters({
@@ -108,6 +134,8 @@ export function CatalogFilters({
     selectedCount(selected.brand) +
     selectedCount(selected.color) +
     selectedCount(selected.size) +
+    selectedCount(selected.gender) +
+    selectedCount(selected.material) +
     selectedCount(selected.attribute) +
     priceCount;
 
@@ -178,7 +206,7 @@ export function CatalogFilters({
           <FilterGroup title={labels.color} count={selectedCount(selected.color)}>
             <div className="grid grid-cols-2 gap-1">
               {filters.colors.map((color) => (
-                <CheckboxFilter key={color} name="color" value={color} label={color} checked={isSelected(selected.color, color)} />
+                <CheckboxFilter key={color} name="color" value={color} label={groupLabel(labels.colorGroups, color)} checked={isSelected(selected.color, color)} swatchClassName={colorSwatches[color]} />
               ))}
             </div>
           </FilterGroup>
@@ -186,7 +214,23 @@ export function CatalogFilters({
           <FilterGroup title={labels.size} count={selectedCount(selected.size)}>
             <div className="grid grid-cols-2 gap-1">
               {filters.sizes.map((size) => (
-                <CheckboxFilter key={size} name="size" value={size} label={size} checked={isSelected(selected.size, size)} />
+                <CheckboxFilter key={size} name="size" value={size} label={groupLabel(labels.sizeGroups, size)} checked={isSelected(selected.size, size)} />
+              ))}
+            </div>
+          </FilterGroup>
+
+          <FilterGroup title={labels.gender} count={selectedCount(selected.gender)}>
+            <div className="grid grid-cols-1 gap-1">
+              {filters.genders.map((gender) => (
+                <CheckboxFilter key={gender} name="gender" value={gender} label={gender} checked={isSelected(selected.gender, gender)} />
+              ))}
+            </div>
+          </FilterGroup>
+
+          <FilterGroup title={labels.material} count={selectedCount(selected.material)}>
+            <div className="grid grid-cols-1 gap-1">
+              {filters.materials.map((material) => (
+                <CheckboxFilter key={material} name="material" value={material} label={material} checked={isSelected(selected.material, material)} />
               ))}
             </div>
           </FilterGroup>

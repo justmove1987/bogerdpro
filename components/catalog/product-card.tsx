@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ShoppingCart } from "lucide-react";
 import { formatPriceRange } from "@/lib/catalog/format";
+import { applyDiscountRange, type BrandDiscountMap } from "@/lib/pricing/discounts";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
@@ -12,20 +13,22 @@ export type CatalogProductCard = {
   isFeatured?: boolean;
   minPriceCents?: number | null;
   maxPriceCents?: number | null;
-  category: { name: string; slug: string } | null;
-  brand: { name: string; slug: string } | null;
+  category: { id: string; name: string; slug: string } | null;
+  brand: { id: string; name: string; slug: string } | null;
   images: { url: string; alt: string | null }[];
   variants: { sku?: string; currency: string; stock: number }[];
 };
 
-export function ProductCard({ product, labels }: { product: CatalogProductCard; labels: Dictionary["catalog"] }) {
+export function ProductCard({ product, labels, discounts = {} }: { product: CatalogProductCard; labels: Dictionary["catalog"]; discounts?: BrandDiscountMap }) {
   const image = product.images[0];
   const firstVariant = product.variants[0];
+  const discountPercent = product.brand?.id ? discounts[product.brand.id] : undefined;
+  const discountedRange = applyDiscountRange(product.minPriceCents, product.maxPriceCents, discountPercent);
 
   return (
     <article className="group overflow-hidden rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white transition duration-200 hover:-translate-y-1 hover:border-[#cfc6b7] hover:shadow-[var(--shadow-soft)]">
       <Link href={`/product/${product.slug}`} className="premium-focus block rounded-[var(--radius-md)]">
-        <div className="relative aspect-[4/3] overflow-hidden bg-[#efebe3]">
+        <div className="relative aspect-[3/3] overflow-hidden bg-[#efebe3]">
           <ImageWithFallback
             src={image?.url ?? "/images/products/workwear-chaleco-casco.jpg"}
             fallbackSrc="/images/products/workwear-chaleco-casco.jpg"
@@ -50,9 +53,23 @@ export function ProductCard({ product, labels }: { product: CatalogProductCard; 
           <div className="mt-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-xs text-[#62615d]">{labels.fromPrice}</p>
-              <p className="text-xl font-bold tracking-tight">
-                {formatPriceRange(product.minPriceCents, product.maxPriceCents, firstVariant?.currency)}
-              </p>
+              {discountPercent ? (
+                <div className="mt-1">
+                  <p className="text-xs font-medium text-[#8a8174] line-through">
+                    {formatPriceRange(product.minPriceCents, product.maxPriceCents, firstVariant?.currency)}
+                  </p>
+                  <p className="text-xl font-bold tracking-tight">
+                    {formatPriceRange(discountedRange.min, discountedRange.max, firstVariant?.currency)}
+                  </p>
+                  <p className="mt-1 w-fit rounded-full bg-[#eef5ff] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
+                    {labels.customerDiscount.replace("{percent}", String(discountPercent))}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xl font-bold tracking-tight">
+                  {formatPriceRange(product.minPriceCents, product.maxPriceCents, firstVariant?.currency)}
+                </p>
+              )}
             </div>
             <span className="grid h-11 w-11 place-items-center rounded-[var(--radius-sm)] bg-[#151515] text-white transition duration-200 group-hover:scale-105 group-hover:bg-[var(--accent)]">
               <ShoppingCart size={18} />

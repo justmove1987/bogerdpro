@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { slugify } from "../lib/admin/utils";
+import { normalizeColorGroup, normalizeSizeGroup } from "../lib/catalog/filter-groups";
 
 type NewWaveVariant = {
   sku: string;
@@ -18,10 +19,14 @@ type NewWaveProduct = {
   name: string;
   slug: string;
   description: string | null;
+  gender?: string | null;
+  material?: string | null;
   category: string | null;
   subcategory: string | null;
   brand: string;
   images: string[];
+  documents?: { type: string; title: string; url: string }[];
+  specifications?: { label: string; value: string }[];
   attributes: Record<string, string>;
   variants: NewWaveVariant[];
 };
@@ -70,6 +75,7 @@ async function clearCatalog() {
     prisma.productAttributeValue.deleteMany(),
     prisma.variantAttributeValue.deleteMany(),
     prisma.productImage.deleteMany(),
+    prisma.productDocument.deleteMany(),
     prisma.productVariant.deleteMany(),
     prisma.product.deleteMany(),
     prisma.attributeValue.deleteMany(),
@@ -92,6 +98,9 @@ async function importProducts(products: NewWaveProduct[]) {
         name: item.name,
         slug: item.slug,
         description: item.description,
+        gender: item.gender ?? null,
+        material: item.material ?? null,
+        specifications: item.specifications ?? [],
         status: "ACTIVE",
         isActive: true,
         isFeatured: index < 24,
@@ -106,12 +115,22 @@ async function importProducts(products: NewWaveProduct[]) {
             position,
           })),
         },
+        documents: {
+          create: (item.documents ?? []).map((document, position) => ({
+            type: document.type,
+            title: document.title,
+            url: document.url,
+            position,
+          })),
+        },
         variants: {
           create: item.variants.map((variant) => ({
             sku: variant.sku,
             name: variant.name,
             color: variant.color,
+            colorGroup: normalizeColorGroup(variant.color),
             size: variant.size,
+            sizeGroup: normalizeSizeGroup(variant.size),
             priceCents: variant.priceCents,
             stock: variant.stock,
             isActive: true,

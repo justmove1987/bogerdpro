@@ -12,6 +12,22 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.nwgmedia.com",
       },
+      {
+        protocol: "https",
+        hostname: "static.gorfactory.es",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.shopify.com",
+      },
+      {
+        protocol: "https",
+        hostname: "catalogo.workteam.com",
+      },
+      {
+        protocol: "https",
+        hostname: "assets.ppe-analytics.com",
+      },
     ],
   },
 };

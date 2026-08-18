@@ -34,6 +34,23 @@ def split_list(value):
     return [part.strip() for part in re.split(r"[,;|]", value) if part.strip()]
 
 
+def document_type(url):
+    normalized = url.lower()
+    if any(token in normalized for token in ["storlek", "size", "talla"]):
+        return "SIZE_GUIDE"
+    if any(token in normalized for token in ["declaration", "conformity", "cert", "doc"]):
+        return "TECHNICAL_SHEET"
+    return "DOCUMENT"
+
+
+def document_title(doc_type):
+    return {
+        "SIZE_GUIDE": "Guía de tallas",
+        "TECHNICAL_SHEET": "Ficha técnica",
+        "DOCUMENT": "Documento técnico",
+    }[doc_type]
+
+
 def slugify(value):
     value = unicodedata.normalize("NFD", value).encode("ascii", "ignore").decode("ascii")
     value = re.sub(r"[^a-zA-Z0-9]+", "-", value.lower()).strip("-")
@@ -48,6 +65,13 @@ def first_value(row, indexes, names):
             if value:
                 return value
     return None
+
+
+def spec(label, value):
+    value = text(value)
+    if not value:
+        return None
+    return {"label": label, "value": value}
 
 
 def normalize(xlsx_path: Path, output_path: Path):
@@ -92,17 +116,62 @@ def normalize(xlsx_path: Path, output_path: Path):
             for url in image_sources:
                 if url.startswith("http") and url not in images:
                     images.append(url)
+            documents = []
+            for url in split_list(first_value(row, indexes, ["Documents"])):
+                if not url.startswith("http") or any(document["url"] == url for document in documents):
+                    continue
+                doc_type = document_type(url)
+                documents.append({"type": doc_type, "title": document_title(doc_type), "url": url})
+
+            specifications = [
+                item
+                for item in [
+                    spec("Género", first_value(row, indexes, ["Gender (es)"])),
+                    spec("Composición", first_value(row, indexes, ["Fabrics (es)"])),
+                    spec("Gramaje", first_value(row, indexes, ["Textile weight"])),
+                    spec("Técnica/material", first_value(row, indexes, ["Material technique (es)"])),
+                    spec("Certificación", first_value(row, indexes, ["Certification (es)"])),
+                    spec("Descripción de certificación", first_value(row, indexes, ["Certification description (es)"])),
+                    spec("Uso recomendado", first_value(row, indexes, ["Activity type (es)"])),
+                    spec("Área de aplicación", first_value(row, indexes, ["Application area (es)"])),
+                    spec("Tipo de aplicación", first_value(row, indexes, ["Application type (es)"])),
+                    spec("Información de aplicación", first_value(row, indexes, ["Application info (es)"])),
+                    spec("Características", first_value(row, indexes, ["Feature (es)"])),
+                    spec("Ajuste", first_value(row, indexes, ["Fit (es)"])),
+                    spec("Cierre", first_value(row, indexes, ["Closure (es)"])),
+                    spec("Bolsillos", first_value(row, indexes, ["Pockets (es)"])),
+                    spec("Capucha", first_value(row, indexes, ["Hood details (es)"])),
+                    spec("Cuello", first_value(row, indexes, ["Neck line (es)"])),
+                    spec("Manga", first_value(row, indexes, ["Sleeve (es)"])),
+                    spec("Instrucciones de cuidado", first_value(row, indexes, ["Care instructions (es)"])),
+                    spec("Comentario técnico", first_value(row, indexes, ["Technique comment (es)"])),
+                    spec("Comentario de color", first_value(row, indexes, ["Color comment (es)"])),
+                    spec("Packaging", first_value(row, indexes, ["Packaging Comment (es)"])),
+                    spec("Peso", first_value(row, indexes, ["Weight"])),
+                    spec("Código de impresión", first_value(row, indexes, ["Print code"])),
+                    spec("Temporada", first_value(row, indexes, ["Season"])),
+                    spec("Rango", first_value(row, indexes, ["Range (es)"])),
+                    spec("USP", first_value(row, indexes, ["USP text (es)"])),
+                ]
+                if item
+            ]
 
             if product_number not in products:
+                gender = first_value(row, indexes, ["Gender (es)"])
+                material = first_value(row, indexes, ["Material technique (es)"])
                 products[product_number] = {
                     "productNumber": product_number,
                     "name": name,
                     "slug": f"{slugify(name)}-{slugify(product_number)}",
                     "description": description,
+                    "gender": gender,
+                    "material": material,
                     "category": categories[0] if categories else None,
                     "subcategory": categories[1] if len(categories) > 1 else None,
                     "brand": brand,
                     "images": images[:12],
+                    "documents": documents,
+                    "specifications": specifications,
                     "attributes": {
                         key: value
                         for key, value in {
@@ -121,6 +190,10 @@ def normalize(xlsx_path: Path, output_path: Path):
                 for url in images:
                     if url not in existing_images and len(existing_images) < 12:
                         existing_images.append(url)
+                existing_documents = products[product_number]["documents"]
+                for document in documents:
+                    if all(existing["url"] != document["url"] for existing in existing_documents):
+                        existing_documents.append(document)
 
             color = first_value(row, indexes, ["Color (es)", "Color code"])
             size = first_value(row, indexes, ["Size name", "Size code"])

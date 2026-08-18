@@ -9,6 +9,7 @@ import { HeroActionPanel } from "@/components/home/hero-action-panel";
 import { getSiteContent } from "@/config/site-content";
 import { getCatalogFiltersForSearch, getCatalogProducts, parseCatalogSearchParams } from "@/lib/catalog/queries";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
+import { getCurrentUserBrandDiscounts } from "@/lib/pricing/discounts";
 import { absoluteUrl, defaultSeo, siteName } from "@/lib/seo/site";
 
 type HomePageProps = {
@@ -31,9 +32,10 @@ export const metadata: Metadata = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const homeSearchParams = await searchParams;
   const selected = parseCatalogSearchParams(homeSearchParams);
-  const filters = await getCatalogFiltersForSearch(selected);
-  const catalog = await getCatalogProducts(selected);
   const locale = await getCurrentLocale();
+  const filters = await getCatalogFiltersForSearch(selected, locale);
+  const catalog = await getCatalogProducts(selected, locale);
+  const discounts = await getCurrentUserBrandDiscounts();
   const dictionary = await getCurrentDictionary();
   const siteContent = getSiteContent(locale);
 
@@ -89,6 +91,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             searchParams={homeSearchParams}
             showPagination={false}
             actionPath="/"
+            discounts={discounts}
             labels={{ catalog: dictionary.catalog, search: dictionary.search }}
           />
         </div>

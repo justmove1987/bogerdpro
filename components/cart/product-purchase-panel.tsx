@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import { formatPriceRange } from "@/lib/catalog/format";
@@ -11,10 +11,15 @@ type PurchaseVariant = {
   sku: string;
   color: string | null;
   size: string | null;
+  imageUrl?: string | null;
   priceCents: number;
+  originalPriceCents?: number | null;
+  discountPercent?: number | null;
   currency: string;
   stock: number;
 };
+
+const productImageSelectEvent = "bogerdpro:product-image-select";
 
 type ProductPurchasePanelProps = {
   product: {
@@ -55,6 +60,11 @@ export function ProductPurchasePanel({ product, variants, labels }: ProductPurch
     if (match) setSelectedVariantId(match.id);
   }
 
+  useEffect(() => {
+    if (!selectedVariant?.imageUrl) return;
+    window.dispatchEvent(new CustomEvent(productImageSelectEvent, { detail: { imageUrl: selectedVariant.imageUrl } }));
+  }, [selectedVariant?.imageUrl]);
+
   function handleAdd() {
     if (!selectedVariant) return;
 
@@ -65,10 +75,12 @@ export function ProductPurchasePanel({ product, variants, labels }: ProductPurch
         productName: product.name,
         productSku: product.sku,
         variantSku: selectedVariant.sku,
-        image: product.image,
+        image: selectedVariant.imageUrl ?? product.image,
         color: selectedVariant.color,
         size: selectedVariant.size,
         priceCents: selectedVariant.priceCents,
+        originalPriceCents: selectedVariant.originalPriceCents,
+        discountPercent: selectedVariant.discountPercent,
         currency: selectedVariant.currency,
         stock: selectedVariant.stock,
         quantity,
@@ -84,9 +96,25 @@ export function ProductPurchasePanel({ product, variants, labels }: ProductPurch
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm text-[#62615d]">{labels.professionalPrice}</p>
-          <p className="mt-1 text-3xl font-bold tracking-tight">
-            {selectedVariant ? formatPriceRange(selectedVariant.priceCents, selectedVariant.priceCents, selectedVariant.currency) : labels.ask}
-          </p>
+          {selectedVariant ? (
+            <div className="mt-1">
+              {selectedVariant.discountPercent && selectedVariant.originalPriceCents ? (
+                <p className="text-sm font-medium text-[#8a8174] line-through">
+                  {formatPriceRange(selectedVariant.originalPriceCents, selectedVariant.originalPriceCents, selectedVariant.currency)}
+                </p>
+              ) : null}
+              <p className="text-3xl font-bold tracking-tight">
+                {formatPriceRange(selectedVariant.priceCents, selectedVariant.priceCents, selectedVariant.currency)}
+              </p>
+              {selectedVariant.discountPercent ? (
+                <p className="mt-2 w-fit rounded-full bg-[#eef5ff] px-2 py-1 text-xs font-semibold text-[var(--accent)]">
+                  {labels.customerDiscount.replace("{percent}", String(selectedVariant.discountPercent))}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mt-1 text-3xl font-bold tracking-tight">{labels.ask}</p>
+          )}
           {selectedVariant ? (
             <p className="mt-2 text-sm text-[#62615d]">
               {labels.variantSku}: <span className="font-semibold text-[#151515]">{selectedVariant.sku}</span>

@@ -103,7 +103,19 @@ export function CartView({ labels }: { labels: Dictionary["cart"] & Pick<Diction
               <p className="mt-2 text-sm text-[#62615d]">
                 {[item.color, item.size].filter(Boolean).join(" · ") || labels.standardVariant}
               </p>
-              <p className="mt-3 text-sm font-semibold">{formatPriceRange(item.priceCents, item.priceCents, item.currency)}</p>
+              <div className="mt-3">
+                {item.discountPercent && item.originalPriceCents ? (
+                  <p className="text-xs font-medium text-[#8a8174] line-through">
+                    {formatPriceRange(item.originalPriceCents, item.originalPriceCents, item.currency)}
+                  </p>
+                ) : null}
+                <p className="text-sm font-semibold">{formatPriceRange(item.priceCents, item.priceCents, item.currency)}</p>
+                {item.discountPercent ? (
+                  <p className="mt-1 w-fit rounded-full bg-[#eef5ff] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
+                    {labels.customerDiscount.replace("{percent}", String(item.discountPercent))}
+                  </p>
+                ) : null}
+              </div>
             </div>
             <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
               <div className="flex h-10 items-center overflow-hidden rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white">

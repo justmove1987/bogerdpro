@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { applyDiscountCents, normalizeDiscountPercent } from "@/lib/pricing/discounts";
 
 export type CheckoutCartItem = {
   variantId: string;
@@ -12,6 +13,8 @@ export type PreparedOrderItem = {
   sku: string;
   quantity: number;
   unitCents: number;
+  originalUnitCents: number;
+  discountPercent: number | null;
   totalCents: number;
   currency: string;
   stripeName: string;
@@ -33,7 +36,7 @@ function aggregateCartItems(items: CheckoutCartItem[]) {
   return [...itemsByVariantId.entries()].map(([variantId, quantity]) => ({ variantId, quantity }));
 }
 
-export async function prepareCartOrder(items: CheckoutCartItem[]): Promise<PreparedCartOrder | { error: string }> {
+export async function prepareCartOrder(items: CheckoutCartItem[], userId?: string | null): Promise<PreparedCartOrder | { error: string }> {
   const cartItems = aggregateCartItems(items);
   const variantIds = cartItems.map((item) => item.variantId);
   const variants = await prisma.productVariant.findMany({
@@ -44,11 +47,19 @@ export async function prepareCartOrder(items: CheckoutCartItem[]): Promise<Prepa
     },
     include: {
       product: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, brandId: true },
       },
     },
   });
   const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
+  const brandIds = [...new Set(variants.flatMap((variant) => (variant.product.brandId ? [variant.product.brandId] : [])))];
+  const discounts = userId
+    ? await prisma.userBrandDiscount.findMany({
+        where: { userId, brandId: { in: brandIds } },
+        select: { brandId: true, percent: true },
+      })
+    : [];
+  const discountsByBrandId = new Map(discounts.map((discount) => [discount.brandId, normalizeDiscountPercent(discount.percent)]));
 
   for (const item of cartItems) {
     const variant = variantsById.get(item.variantId);
@@ -67,6 +78,8 @@ export async function prepareCartOrder(items: CheckoutCartItem[]): Promise<Prepa
     if (!variant) throw new Error("Variant not found after validation.");
     const variantLabel = [variant.color, variant.size].filter(Boolean).join(" · ");
     const name = variantLabel ? `${variant.product.name} (${variantLabel})` : variant.product.name;
+    const discountPercent = variant.product.brandId ? discountsByBrandId.get(variant.product.brandId) ?? null : null;
+    const unitCents = applyDiscountCents(variant.priceCents, discountPercent);
 
     return {
       productId: variant.product.id,
@@ -74,8 +87,10 @@ export async function prepareCartOrder(items: CheckoutCartItem[]): Promise<Prepa
       name,
       sku: variant.sku,
       quantity: item.quantity,
-      unitCents: variant.priceCents,
-      totalCents: variant.priceCents * item.quantity,
+      unitCents,
+      originalUnitCents: variant.priceCents,
+      discountPercent,
+      totalCents: unitCents * item.quantity,
       currency: variant.currency,
       stripeName: name,
     };

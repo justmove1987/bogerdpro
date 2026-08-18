@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth/options";
 import { prisma } from "@/lib/db/prisma";
+import { getCurrentDictionary } from "@/lib/i18n/locale";
 
 export type AccountActionState = {
   ok: boolean;
@@ -31,6 +32,19 @@ const billingSchema = z.object({
   lastName: z.string().trim().max(120, "Los apellidos son demasiado largos.").optional(),
   companyName: z.string().trim().max(160, "La empresa es demasiado larga.").optional(),
   taxId: z.string().trim().max(40, "El NIF/CIF es demasiado largo.").optional(),
+  phone: z.string().trim().max(40, "El teléfono es demasiado largo.").optional(),
+  addressLine1: z.string().trim().max(180, "La dirección es demasiado larga.").optional(),
+  addressLine2: z.string().trim().max(180, "La dirección adicional es demasiado larga.").optional(),
+  postalCode: z.string().trim().max(20, "El código postal es demasiado largo.").optional(),
+  city: z.string().trim().max(100, "La ciudad es demasiado larga.").optional(),
+  province: z.string().trim().max(100, "La provincia es demasiado larga.").optional(),
+  country: z.string().trim().max(80, "El país es demasiado largo.").optional(),
+});
+
+const shippingSchema = z.object({
+  sameAsBilling: z.boolean(),
+  contactName: z.string().trim().max(140, "El contacto es demasiado largo.").optional(),
+  companyName: z.string().trim().max(160, "La empresa es demasiado larga.").optional(),
   phone: z.string().trim().max(40, "El teléfono es demasiado largo.").optional(),
   addressLine1: z.string().trim().max(180, "La dirección es demasiado larga.").optional(),
   addressLine2: z.string().trim().max(180, "La dirección adicional es demasiado larga.").optional(),
@@ -69,6 +83,7 @@ async function getCurrentUser() {
 
 export async function updateAccountProfile(_state: AccountActionState, formData: FormData): Promise<AccountActionState> {
   try {
+    const labels = (await getCurrentDictionary()).account.actions;
     const user = await getCurrentUser();
     const parsed = profileSchema.safeParse({
       name: formData.get("name"),
@@ -88,7 +103,7 @@ export async function updateAccountProfile(_state: AccountActionState, formData:
     });
 
     if (existingEmail) {
-      return { ok: false, message: "Este email ya está asociado a otra cuenta." };
+      return { ok: false, message: labels.emailExists };
     }
 
     await prisma.$transaction([
@@ -106,14 +121,16 @@ export async function updateAccountProfile(_state: AccountActionState, formData:
     ]);
 
     revalidatePath("/cuenta");
-    return { ok: true, message: "Datos actualizados correctamente. Si has cambiado el email, vuelve a iniciar sesión para refrescar la sesión." };
+    return { ok: true, message: labels.profileSaved };
   } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "No se han podido guardar los cambios." };
+    const labels = (await getCurrentDictionary()).account.actions;
+    return { ok: false, message: error instanceof Error ? error.message : labels.profileError };
   }
 }
 
 export async function updateAccountPassword(_state: AccountActionState, formData: FormData): Promise<AccountActionState> {
   try {
+    const labels = (await getCurrentDictionary()).account.actions;
     const user = await getCurrentUser();
     const parsed = passwordSchema.safeParse({
       currentPassword: formData.get("currentPassword"),
@@ -126,19 +143,19 @@ export async function updateAccountPassword(_state: AccountActionState, formData
     }
 
     if (!user.passwordHash) {
-      return { ok: false, message: "Esta cuenta no tiene contraseña local configurada." };
+      return { ok: false, message: labels.noLocalPassword };
     }
 
     const validCurrentPassword = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
 
     if (!validCurrentPassword) {
-      return { ok: false, message: "La contraseña actual no es correcta." };
+      return { ok: false, message: labels.currentPasswordInvalid };
     }
 
     const samePassword = await bcrypt.compare(parsed.data.newPassword, user.passwordHash);
 
     if (samePassword) {
-      return { ok: false, message: "La nueva contraseña debe ser diferente a la actual." };
+      return { ok: false, message: labels.newPasswordMustDiffer };
     }
 
     const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
@@ -148,14 +165,16 @@ export async function updateAccountPassword(_state: AccountActionState, formData
       data: { passwordHash },
     });
 
-    return { ok: true, message: "Contraseña actualizada correctamente." };
+    return { ok: true, message: labels.passwordSaved };
   } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "No se ha podido actualizar la contraseña." };
+    const labels = (await getCurrentDictionary()).account.actions;
+    return { ok: false, message: error instanceof Error ? error.message : labels.passwordError };
   }
 }
 
 export async function updateBillingData(_state: AccountActionState, formData: FormData): Promise<AccountActionState> {
   try {
+    const labels = (await getCurrentDictionary()).account.actions;
     const user = await getCurrentUser();
     const parsed = billingSchema.safeParse({
       firstName: formData.get("firstName"),
@@ -208,8 +227,84 @@ export async function updateBillingData(_state: AccountActionState, formData: Fo
     });
 
     revalidatePath("/cuenta");
-    return { ok: true, message: "Datos de facturación guardados correctamente." };
+    return { ok: true, message: labels.billingSaved };
   } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "No se han podido guardar los datos de facturación." };
+    const labels = (await getCurrentDictionary()).account.actions;
+    return { ok: false, message: error instanceof Error ? error.message : labels.billingError };
+  }
+}
+
+export async function updateShippingData(_state: AccountActionState, formData: FormData): Promise<AccountActionState> {
+  try {
+    const labels = (await getCurrentDictionary()).account.actions;
+    const user = await getCurrentUser();
+    const parsed = shippingSchema.safeParse({
+      sameAsBilling: formData.get("sameAsBilling") === "on",
+      contactName: formData.get("contactName"),
+      companyName: formData.get("companyName"),
+      phone: formData.get("phone"),
+      addressLine1: formData.get("addressLine1"),
+      addressLine2: formData.get("addressLine2"),
+      postalCode: formData.get("postalCode"),
+      city: formData.get("city"),
+      province: formData.get("province"),
+      country: formData.get("country"),
+    });
+
+    if (!parsed.success) {
+      return { ok: false, message: firstFormError(parsed.error) };
+    }
+
+    const customer = await prisma.customer.findUnique({
+      where: { userId: user.id },
+      select: { billingAddress: true, firstName: true, lastName: true, companyName: true, phone: true },
+    });
+
+    const billingAddress = customer?.billingAddress && typeof customer.billingAddress === "object" && !Array.isArray(customer.billingAddress)
+      ? customer.billingAddress as Record<string, unknown>
+      : {};
+
+    const shippingAddress = parsed.data.sameAsBilling
+      ? {
+          contactName: [customer?.firstName, customer?.lastName].filter(Boolean).join(" ") || null,
+          companyName: customer?.companyName ?? null,
+          phone: customer?.phone ?? null,
+          addressLine1: typeof billingAddress.addressLine1 === "string" ? billingAddress.addressLine1 : null,
+          addressLine2: typeof billingAddress.addressLine2 === "string" ? billingAddress.addressLine2 : null,
+          postalCode: typeof billingAddress.postalCode === "string" ? billingAddress.postalCode : null,
+          city: typeof billingAddress.city === "string" ? billingAddress.city : null,
+          province: typeof billingAddress.province === "string" ? billingAddress.province : null,
+          country: typeof billingAddress.country === "string" ? billingAddress.country : "España",
+        }
+      : {
+          contactName: emptyToNull(parsed.data.contactName),
+          companyName: emptyToNull(parsed.data.companyName),
+          phone: emptyToNull(parsed.data.phone),
+          addressLine1: emptyToNull(parsed.data.addressLine1),
+          addressLine2: emptyToNull(parsed.data.addressLine2),
+          postalCode: emptyToNull(parsed.data.postalCode),
+          city: emptyToNull(parsed.data.city),
+          province: emptyToNull(parsed.data.province),
+          country: emptyToNull(parsed.data.country) ?? "España",
+        };
+
+    await prisma.customer.upsert({
+      where: { userId: user.id },
+      update: {
+        email: user.email ?? "",
+        shippingAddress,
+      },
+      create: {
+        userId: user.id,
+        email: user.email ?? `cliente-${user.id}@bogerdpro.local`,
+        shippingAddress,
+      },
+    });
+
+    revalidatePath("/cuenta");
+    return { ok: true, message: labels.shippingSaved };
+  } catch (error) {
+    const labels = (await getCurrentDictionary()).account.actions;
+    return { ok: false, message: error instanceof Error ? error.message : labels.shippingError };
   }
 }

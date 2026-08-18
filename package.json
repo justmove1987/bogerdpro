@@ -12,6 +12,10 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed/seed.ts",
+    "translations:export": "tsx scripts/export-catalog-translations.ts",
+    "translations:import": "tsx scripts/import-catalog-translations.ts",
+    "products:backfill-details": "tsx scripts/backfill-product-details.ts",
+    "variants:backfill-filter-groups": "tsx scripts/backfill-variant-filter-groups.ts",
     "check:env": "node scripts/check-production-env.mjs"
   },
   "keywords": [],

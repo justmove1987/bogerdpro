@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Building2, FolderTree, Package, ReceiptText, Upload } from "lucide-react";
+import { Building2, FolderTree, Package, ReceiptText, Upload, UsersRound } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/guards";
 
 const adminNav = [
   { href: "/admin/products", label: "Productos", icon: Package },
   { href: "/admin/categories", label: "Categorías", icon: FolderTree },
   { href: "/admin/brands", label: "Marcas", icon: Building2 },
+  { href: "/admin/users", label: "Usuarios", icon: UsersRound },
   { href: "/admin/orders", label: "Pedidos", icon: ReceiptText },
   { href: "/admin/imports", label: "Imports CSV", icon: Upload },
 ];

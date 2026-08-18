@@ -5,6 +5,7 @@ import { VisualSearch } from "@/components/catalog/visual-search";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { CatalogSearchParams } from "@/lib/catalog/queries";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import type { BrandDiscountMap } from "@/lib/pricing/discounts";
 
 type ProductBrowserProps = {
   filters: Parameters<typeof CatalogFilters>[0]["filters"];
@@ -19,13 +20,14 @@ type ProductBrowserProps = {
   searchParams: Record<string, string | string[] | undefined>;
   showPagination?: boolean;
   actionPath?: string;
+  discounts?: BrandDiscountMap;
   labels: {
     catalog: Dictionary["catalog"];
     search: Dictionary["search"];
   };
 };
 
-export function ProductBrowser({ filters, catalog, selected, searchParams, showPagination = true, actionPath = "/catalog", labels }: ProductBrowserProps) {
+export function ProductBrowser({ filters, catalog, selected, searchParams, showPagination = true, actionPath = "/catalog", discounts = {}, labels }: ProductBrowserProps) {
   const firstItem = catalog.total === 0 ? 0 : (catalog.page - 1) * catalog.perPage + 1;
   const lastItem = Math.min(catalog.total, catalog.page * catalog.perPage);
 
@@ -57,7 +59,7 @@ export function ProductBrowser({ filters, catalog, selected, searchParams, showP
           <>
             <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {catalog.products.map((product) => (
-                <ProductCard key={product.slug} product={product} labels={labels.catalog} />
+                <ProductCard key={product.slug} product={product} labels={labels.catalog} discounts={discounts} />
               ))}
             </div>
             {showPagination ? <Pagination page={catalog.page} pageCount={catalog.pageCount} searchParams={searchParams} labels={labels.catalog} /> : null}
