@@ -89,7 +89,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             catalog={catalog}
             selected={selected}
             searchParams={homeSearchParams}
-            showPagination={false}
             actionPath="/"
             discounts={discounts}
             labels={{ catalog: dictionary.catalog, search: dictionary.search }}

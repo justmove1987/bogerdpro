@@ -34,7 +34,7 @@ export function ProductBrowser({ filters, catalog, selected, searchParams, showP
   return (
     <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
       <CatalogFilters filters={filters} selected={selected} actionPath={actionPath} labels={labels.catalog} />
-      <section>
+      <section id="products" className="scroll-mt-24">
         <VisualSearch defaultValue={selected.q} actionPath={actionPath} labels={labels.search} />
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-[#62615d]">
           <p>{catalog.total === 0 ? `0 ${labels.catalog.count}` : `${firstItem}-${lastItem} ${labels.catalog.countOf} ${catalog.total} ${labels.catalog.count}`}</p>
@@ -62,7 +62,7 @@ export function ProductBrowser({ filters, catalog, selected, searchParams, showP
                 <ProductCard key={product.slug} product={product} labels={labels.catalog} discounts={discounts} />
               ))}
             </div>
-            {showPagination ? <Pagination page={catalog.page} pageCount={catalog.pageCount} searchParams={searchParams} labels={labels.catalog} /> : null}
+            {showPagination ? <Pagination page={catalog.page} pageCount={catalog.pageCount} searchParams={searchParams} basePath={actionPath} hash="products" labels={labels.catalog} /> : null}
           </>
         ) : (
           <div className="mt-6">
