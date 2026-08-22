@@ -1,16 +1,19 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
 import { Download, FileText } from "lucide-react";
-import { downloadableCatalogSections } from "@/config/downloadable-catalogs";
+import { getDownloadableCatalogSections } from "@/config/downloadable-catalogs";
+import type { Locale } from "@/config/i18n";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 type DownloadableCatalogsProps = {
   sectionSlug?: string;
   showSectionIntro?: boolean;
+  locale: Locale;
   labels: Pick<Dictionary["catalog"], "downloadCatalog">;
 };
 
-export function DownloadableCatalogs({ sectionSlug, showSectionIntro = true, labels }: DownloadableCatalogsProps) {
+export function DownloadableCatalogs({ sectionSlug, showSectionIntro = true, locale, labels }: DownloadableCatalogsProps) {
+  const downloadableCatalogSections = getDownloadableCatalogSections(locale);
   const sections = sectionSlug
     ? downloadableCatalogSections.filter((section) => section.slug === sectionSlug)
     : downloadableCatalogSections;

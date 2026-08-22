@@ -64,7 +64,7 @@ export default async function CatalogPage() {
         ))}
       </div>
 
-      <DownloadableCatalogs labels={dictionary.catalog} />
+      <DownloadableCatalogs locale={locale} labels={dictionary.catalog} />
     </div>
   );
 }

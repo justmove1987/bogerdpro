@@ -4,11 +4,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { DownloadableCatalogs } from "@/components/catalog/downloadable-catalogs";
-import { downloadableCatalogSections } from "@/config/downloadable-catalogs";
-import { getCurrentDictionary } from "@/lib/i18n/locale";
+import { downloadableCatalogSections, getDownloadableCatalogSections } from "@/config/downloadable-catalogs";
+import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 import { absoluteUrl, siteName } from "@/lib/seo/site";
-
-const findSection = (slug: string) => downloadableCatalogSections.find((section) => section.slug === slug);
 
 type CatalogSectionPageProps = {
   params: Promise<{ slug: string }>;
@@ -20,7 +18,8 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: CatalogSectionPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const section = findSection(slug);
+  const locale = await getCurrentLocale();
+  const section = getDownloadableCatalogSections(locale).find((item) => item.slug === slug);
 
   if (!section) {
     return {
@@ -45,7 +44,9 @@ export async function generateMetadata({ params }: CatalogSectionPageProps): Pro
 
 export default async function CatalogSectionPage({ params }: CatalogSectionPageProps) {
   const { slug } = await params;
-  const section = findSection(slug);
+  const locale = await getCurrentLocale();
+  const sections = getDownloadableCatalogSections(locale);
+  const section = sections.find((item) => item.slug === slug);
   const dictionary = await getCurrentDictionary();
 
   if (!section) {
@@ -83,12 +84,12 @@ export default async function CatalogSectionPage({ params }: CatalogSectionPageP
           </div>
         </div>
 
-        <DownloadableCatalogs sectionSlug={section.slug} showSectionIntro={false} labels={dictionary.catalog} />
+        <DownloadableCatalogs sectionSlug={section.slug} showSectionIntro={false} locale={locale} labels={dictionary.catalog} />
 
         <section className="mt-10 rounded-[24px] border border-[#dbe3ec] bg-white p-5 md:p-6">
           <p className="text-sm font-semibold text-[#151515]">{dictionary.catalog.otherCategories}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {downloadableCatalogSections.map((item) => (
+            {sections.map((item) => (
               <Link
                 key={item.slug}
                 href={`/catalog#${item.slug}`}
