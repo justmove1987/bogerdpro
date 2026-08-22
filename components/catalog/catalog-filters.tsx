@@ -8,6 +8,10 @@ import type { CatalogSearchParams } from "@/lib/catalog/queries";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 type CatalogFiltersData = {
+  catalogGroups: {
+    slug: string;
+    count: number;
+  }[];
   categories: {
     id: string;
     name: string;
@@ -123,13 +127,12 @@ export function CatalogFilters({
   actionPath?: string;
   labels: Dictionary["catalog"];
 }) {
-  const parentCategories = filters.categories.filter((category) => !category.parentId);
-  const childCategories = filters.categories.filter((category) => category.parentId);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const priceCount = Number(typeof selected.minPrice === "number") + Number(typeof selected.maxPrice === "number");
   const totalSelected =
+    selectedCount(selected.catalog) +
     selectedCount(selected.category) +
     selectedCount(selected.brand) +
     selectedCount(selected.color) +
@@ -177,15 +180,15 @@ export function CatalogFilters({
         </div>
 
         <div className="mt-4 grid gap-2">
-          <FilterGroup title={labels.category} count={selectedCount(selected.category)}>
-            {[...parentCategories, ...childCategories].map((category) => (
+          <FilterGroup title={labels.catalogDivision} count={selectedCount(selected.catalog)}>
+            {filters.catalogGroups.map((group) => (
               <CheckboxFilter
-                key={category.slug}
-                name="category"
-                value={category.slug}
-                label={category.name}
-                count={category._count.products}
-                checked={isSelected(selected.category, category.slug)}
+                key={group.slug}
+                name="catalog"
+                value={group.slug}
+                label={groupLabel(labels.catalogGroups, group.slug)}
+                count={group.count}
+                checked={isSelected(selected.catalog, group.slug)}
               />
             ))}
           </FilterGroup>
