@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
+import { ProductImagePlaceholder } from "@/components/catalog/product-image-placeholder";
 
 type GalleryImage = {
   id: string;
@@ -15,9 +16,10 @@ type GalleryLabels = {
   closeImage: string;
   previousImage: string;
   nextImage: string;
+  imagePending: string;
 };
 
-const fallbackImage = "/images/products/workwear-chaleco-casco.jpg";
+const fallbackImage = "/images/products/product-image-pending.svg";
 const productImageSelectEvent = "bogerdpro:product-image-select";
 
 export function ProductImageGallery({
@@ -29,10 +31,11 @@ export function ProductImageGallery({
   productName: string;
   labels: GalleryLabels;
 }) {
-  const galleryImages = useMemo(() => (images.length ? images : [{ id: "fallback", url: fallbackImage, alt: productName }]), [images, productName]);
+  const galleryImages = useMemo(() => images, [images]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const selectedImage = galleryImages[selectedIndex] ?? galleryImages[0];
+  const hasImages = galleryImages.length > 0;
 
   useEffect(() => {
     function handleImageSelect(event: Event) {
@@ -62,22 +65,31 @@ export function ProductImageGallery({
       <button
         type="button"
         className="premium-focus group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-[18px] bg-[#efebe3]"
-        onClick={() => setIsExpanded(true)}
+        onClick={() => {
+          if (hasImages) setIsExpanded(true);
+        }}
         aria-label={labels.enlargeImage}
+        aria-disabled={!hasImages}
       >
-        <ImageWithFallback
-          src={selectedImage.url}
-          fallbackSrc={fallbackImage}
-          alt={selectedImage.alt ?? productName}
-          fill
-          priority
-          sizes="(min-width: 1024px) 48vw, 100vw"
-          className="object-cover transition duration-300 group-hover:scale-[1.01]"
-        />
-        <span className="pointer-events-none absolute bottom-4 right-4 inline-flex h-10 items-center gap-2 rounded-full bg-white/92 px-4 text-sm font-semibold text-[#151515] shadow-[0_10px_24px_rgb(21_21_21/0.14)] opacity-0 transition group-hover:opacity-100">
-          <Expand size={16} />
-          {labels.enlargeImage}
-        </span>
+        {selectedImage ? (
+          <>
+            <ImageWithFallback
+              src={selectedImage.url}
+              fallbackSrc={fallbackImage}
+              alt={selectedImage.alt ?? productName}
+              fill
+              priority
+              sizes="(min-width: 1024px) 48vw, 100vw"
+              className="object-cover transition duration-300 group-hover:scale-[1.01]"
+            />
+            <span className="pointer-events-none absolute bottom-4 right-4 inline-flex h-10 items-center gap-2 rounded-full bg-white/92 px-4 text-sm font-semibold text-[#151515] shadow-[0_10px_24px_rgb(21_21_21/0.14)] opacity-0 transition group-hover:opacity-100">
+              <Expand size={16} />
+              {labels.enlargeImage}
+            </span>
+          </>
+        ) : (
+          <ProductImagePlaceholder label={labels.imagePending} />
+        )}
       </button>
 
       {galleryImages.length > 1 ? (
@@ -110,7 +122,7 @@ export function ProductImageGallery({
         </div>
       ) : null}
 
-      {isExpanded ? (
+      {isExpanded && selectedImage ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/82 p-4">
           <button
             type="button"

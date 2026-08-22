@@ -123,7 +123,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     };
   }
 
-  const image = product.images[0]?.url ?? "/images/products/workwear-chaleco-casco.jpg";
+  const image = product.images[0]?.url ?? "/images/products/product-image-pending.svg";
   const description = productDescription(product);
 
   return {
@@ -206,7 +206,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <ProductImageGallery
           images={product.images.map((image) => ({ id: image.id, url: image.url, alt: image.alt }))}
           productName={product.name}
-          labels={dictionary.product}
+          labels={{ ...dictionary.product, imagePending: dictionary.catalog.imagePending }}
         />
         <section>
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">{product.brand?.name ?? "BogerdPro"}</p>
@@ -226,7 +226,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               slug: product.slug,
               name: product.name,
               sku: product.sku,
-              image: mainImage?.url ?? "/images/products/workwear-chaleco-casco.jpg",
+              image: mainImage?.url ?? "/images/products/product-image-pending.svg",
             }}
             variants={product.variants.map((variant) => ({
               id: variant.id,

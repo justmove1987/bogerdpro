@@ -93,7 +93,7 @@ export function CartView({ labels }: { labels: Dictionary["cart"] & Pick<Diction
         {items.map((item) => (
           <article key={item.variantId} className="grid gap-4 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-4 sm:grid-cols-[120px_1fr_auto]">
             <Link href={`/product/${item.productSlug}`} className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] bg-[#efebe3]">
-              <ImageWithFallback src={item.image ?? "/images/products/workwear-chaleco-casco.jpg"} fallbackSrc="/images/products/workwear-chaleco-casco.jpg" alt={item.productName} fill sizes="120px" className="object-cover" />
+              <ImageWithFallback src={item.image ?? "/images/products/product-image-pending.svg"} fallbackSrc="/images/products/product-image-pending.svg" alt={item.productName} fill sizes="120px" className="object-cover" />
             </Link>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">{item.variantSku}</p>

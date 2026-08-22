@@ -107,7 +107,7 @@ export function ProductForm({
               {product.images.map((image) => (
                 <div key={image.id} className="overflow-hidden rounded-[var(--radius-sm)] border border-[#e7e2d8]">
                   <div className="relative aspect-[4/3] bg-[#f7f5f0]">
-                    <ImageWithFallback src={image.url} fallbackSrc="/images/products/workwear-chaleco-casco.jpg" alt={image.alt ?? product.name} fill sizes="260px" className="object-cover" />
+                    <ImageWithFallback src={image.url} fallbackSrc="/images/products/product-image-pending.svg" alt={image.alt ?? product.name} fill sizes="260px" className="object-cover" />
                   </div>
                   <div className="flex items-center justify-between gap-3 p-3 text-sm">
                     <span className="truncate text-[#62615d]">{image.alt || image.url}</span>

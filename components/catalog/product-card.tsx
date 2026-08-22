@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2, ShoppingCart } from "lucide-react";
 import { formatPriceRange } from "@/lib/catalog/format";
 import { applyDiscountRange, type BrandDiscountMap } from "@/lib/pricing/discounts";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
+import { ProductImagePlaceholder } from "@/components/catalog/product-image-placeholder";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 export type CatalogProductCard = {
@@ -29,15 +30,21 @@ export function ProductCard({ product, labels, discounts = {} }: { product: Cata
     <article className="group overflow-hidden rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white transition duration-200 hover:-translate-y-1 hover:border-[#cfc6b7] hover:shadow-[var(--shadow-soft)]">
       <Link href={`/product/${product.slug}`} className="premium-focus block rounded-[var(--radius-md)]">
         <div className="relative aspect-[3/3] overflow-hidden bg-[#efebe3]">
-          <ImageWithFallback
-            src={image?.url ?? "/images/products/workwear-chaleco-casco.jpg"}
-            fallbackSrc="/images/products/workwear-chaleco-casco.jpg"
-            alt={image?.alt ?? product.name}
-            fill
-            sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition duration-300 group-hover:scale-[1.03]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+          {image ? (
+            <>
+              <ImageWithFallback
+                src={image.url}
+                fallbackSrc="/images/products/product-image-pending.svg"
+                alt={image.alt ?? product.name}
+                fill
+                sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="object-cover transition duration-300 group-hover:scale-[1.03]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+            </>
+          ) : (
+            <ProductImagePlaceholder label={labels.imagePending} />
+          )}
           <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[var(--accent)] shadow-sm">
             {labels.onRequest}
           </span>
