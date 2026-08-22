@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState, useTransition } from "react";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 type RegisterFormProps = {
   callbackUrl?: string;
+  labels: Dictionary["auth"];
 };
 
-export function RegisterForm({ callbackUrl = "/cuenta" }: RegisterFormProps) {
+export function RegisterForm({ callbackUrl = "/cuenta", labels }: RegisterFormProps) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -39,7 +41,7 @@ export function RegisterForm({ callbackUrl = "/cuenta" }: RegisterFormProps) {
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setError(typeof payload.error === "string" ? payload.error : "No se ha podido crear la cuenta.");
+        setError(typeof payload.error === "string" ? payload.error : labels.registerError);
         return;
       }
 
@@ -63,19 +65,17 @@ export function RegisterForm({ callbackUrl = "/cuenta" }: RegisterFormProps) {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-6 shadow-[var(--shadow-soft)]">
       <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">BogerdPro</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">Crear cuenta cliente</h1>
-      <p className="mt-3 text-sm leading-6 text-[#62615d]">
-        Regístrate para guardar tus datos, consultar pedidos y acceder a condiciones o descuentos cuando el administrador los asigne.
-      </p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight">{labels.registerTitle}</h1>
+      <p className="mt-3 text-sm leading-6 text-[#62615d]">{labels.registerText}</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium" htmlFor="firstName">
-          Nombre
+          {labels.firstName}
           <input id="firstName" name="firstName" type="text" className="premium-focus mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm" autoComplete="given-name" required />
         </label>
 
         <label className="block text-sm font-medium" htmlFor="lastName">
-          Apellidos
+          {labels.lastName}
           <input id="lastName" name="lastName" type="text" className="premium-focus mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm" autoComplete="family-name" required />
         </label>
 
@@ -85,41 +85,41 @@ export function RegisterForm({ callbackUrl = "/cuenta" }: RegisterFormProps) {
         </label>
 
         <label className="block text-sm font-medium" htmlFor="phone">
-          Teléfono
+          {labels.phone}
           <input id="phone" name="phone" type="tel" className="premium-focus mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm" autoComplete="tel" />
         </label>
 
         <label className="block text-sm font-medium sm:col-span-2" htmlFor="companyName">
-          Empresa
+          {labels.company}
           <input id="companyName" name="companyName" type="text" className="premium-focus mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm" autoComplete="organization" />
         </label>
 
         <label className="block text-sm font-medium" htmlFor="password">
-          Contraseña
+          {labels.password}
           <input id="password" name="password" type="password" minLength={8} className="premium-focus mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm" autoComplete="new-password" required />
         </label>
 
         <label className="block text-sm font-medium" htmlFor="confirmPassword">
-          Confirmar contraseña
+          {labels.confirmPassword}
           <input id="confirmPassword" name="confirmPassword" type="password" minLength={8} className="premium-focus mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm" autoComplete="new-password" required />
         </label>
       </div>
 
       <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm leading-6 text-[#62615d]">
         <input name="marketingAccepted" type="checkbox" className="mt-1 h-4 w-4 accent-[var(--accent)]" />
-        Acepto recibir comunicaciones comerciales y condiciones especiales de BogerdPro.
+        {labels.marketingAccepted}
       </label>
 
       {error ? <p className="mt-4 rounded-[var(--radius-sm)] bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
 
       <button type="submit" disabled={isPending} className="premium-focus mt-6 h-11 w-full rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60" style={{ color: "#ffffff" }}>
-        {isPending ? "Creando cuenta..." : "Crear cuenta"}
+        {isPending ? labels.creatingAccount : labels.createAccount}
       </button>
 
       <p className="mt-5 text-center text-sm text-[#62615d]">
-        ¿Ya tienes cuenta?{" "}
+        {labels.haveAccount}{" "}
         <Link href="/login" className="font-semibold text-[var(--accent)] underline-offset-4 hover:underline">
-          Entrar
+          {labels.loginButton}
         </Link>
       </p>
     </form>

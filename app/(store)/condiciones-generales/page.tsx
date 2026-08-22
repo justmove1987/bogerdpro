@@ -2,26 +2,33 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { generalTerms } from "@/config/legal-content";
+import { getCurrentDictionary } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = {
-  title: "Condiciones Generales",
-  description: "Condiciones generales de venta de BogerdPro.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dictionary = await getCurrentDictionary();
 
-export default function GeneralTermsPage() {
+  return {
+    title: dictionary.legal.termsTitle,
+    description: dictionary.legal.termsDescription,
+  };
+}
+
+export default async function GeneralTermsPage() {
+  const dictionary = await getCurrentDictionary();
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 md:py-16">
-      <Breadcrumbs items={[{ href: "/", label: "Inicio" }, { label: generalTerms.title }]} />
+      <Breadcrumbs items={[{ href: "/", label: dictionary.nav.home }, { label: dictionary.legal.termsTitle }]} />
 
       <section className="mt-8 border-b border-[var(--line)] pb-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Legal</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-6xl">{generalTerms.title}</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">{dictionary.legal.eyebrow}</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-6xl">{dictionary.legal.termsTitle}</h1>
         <div className="mt-6 grid gap-4 text-lg leading-8 text-[var(--muted)]">
           {generalTerms.intro.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
-        <p className="mt-6 text-sm text-[var(--muted)]">Última actualización: {generalTerms.updatedAt}</p>
+        <p className="mt-6 text-sm text-[var(--muted)]">{dictionary.legal.updatedAt}: {generalTerms.updatedAt}</p>
         <div className="mt-6 rounded-[var(--radius-sm)] border border-[var(--line)] bg-white p-5 text-sm leading-6 text-[var(--muted)]">
           {generalTerms.company.map((item) => (
             <p key={item}>{item}</p>
@@ -57,7 +64,7 @@ export default function GeneralTermsPage() {
 
             {section.title === "22. Protección de datos" ? (
               <Link href="/politica-privacidad" className="text-sm font-semibold text-[var(--accent)] transition hover:text-[var(--ink)]">
-                Ver Política de Privacidad
+                {dictionary.legal.viewPrivacy}
               </Link>
             ) : null}
           </article>

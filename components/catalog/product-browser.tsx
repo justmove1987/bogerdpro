@@ -37,7 +37,7 @@ export function ProductBrowser({ filters, catalog, selected, searchParams, showP
       <section>
         <VisualSearch defaultValue={selected.q} actionPath={actionPath} labels={labels.search} />
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-[#62615d]">
-          <p>{catalog.total === 0 ? `0 ${labels.catalog.count}` : `${firstItem}-${lastItem} de ${catalog.total} ${labels.catalog.count}`}</p>
+          <p>{catalog.total === 0 ? `0 ${labels.catalog.count}` : `${firstItem}-${lastItem} ${labels.catalog.countOf} ${catalog.total} ${labels.catalog.count}`}</p>
           <form action={actionPath} className="flex items-center gap-2">
             {Object.entries(searchParams).flatMap(([key, value]) => {
               if (key === "sort" || key === "page" || typeof value === "undefined") return [];

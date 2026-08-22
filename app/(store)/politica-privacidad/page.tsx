@@ -1,26 +1,33 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { privacyPolicy } from "@/config/legal-content";
+import { getCurrentDictionary } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = {
-  title: "Política de Privacidad",
-  description: "Información sobre el tratamiento de datos personales en BogerdPro.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dictionary = await getCurrentDictionary();
 
-export default function PrivacyPolicyPage() {
+  return {
+    title: dictionary.legal.privacyTitle,
+    description: dictionary.legal.privacyDescription,
+  };
+}
+
+export default async function PrivacyPolicyPage() {
+  const dictionary = await getCurrentDictionary();
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 md:py-16">
-      <Breadcrumbs items={[{ href: "/", label: "Inicio" }, { label: privacyPolicy.title }]} />
+      <Breadcrumbs items={[{ href: "/", label: dictionary.nav.home }, { label: dictionary.legal.privacyTitle }]} />
 
       <section className="mt-8 border-b border-[var(--line)] pb-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Legal</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-6xl">{privacyPolicy.title}</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">{dictionary.legal.eyebrow}</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-6xl">{dictionary.legal.privacyTitle}</h1>
         <div className="mt-6 grid gap-4 text-lg leading-8 text-[var(--muted)]">
           {privacyPolicy.intro.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
-        <p className="mt-6 text-sm text-[var(--muted)]">Última actualización: {privacyPolicy.updatedAt}</p>
+        <p className="mt-6 text-sm text-[var(--muted)]">{dictionary.legal.updatedAt}: {privacyPolicy.updatedAt}</p>
       </section>
 
       <section className="grid gap-10 py-10">

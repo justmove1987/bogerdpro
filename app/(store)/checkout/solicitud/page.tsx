@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import type { Metadata } from "next";
 import { ClearCartOnMount } from "@/components/cart/clear-cart-on-mount";
 import { getCurrentDictionary } from "@/lib/i18n/locale";
 
@@ -7,10 +8,14 @@ type QuoteRequestSuccessPageProps = {
   searchParams: Promise<{ order?: string }>;
 };
 
-export const metadata = {
-  title: "Solicitud enviada",
-  description: "Solicitud de comanda B2B enviada correctamente a BogerdPro.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dictionary = await getCurrentDictionary();
+
+  return {
+    title: dictionary.checkout.quoteTitle,
+    description: dictionary.checkout.quoteText,
+  };
+}
 
 export default async function QuoteRequestSuccessPage({ searchParams }: QuoteRequestSuccessPageProps) {
   const params = await searchParams;

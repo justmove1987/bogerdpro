@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { XCircle } from "lucide-react";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentDictionary } from "@/lib/i18n/locale";
 
-export const metadata = {
-  title: "Pago cancelado",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dictionary = await getCurrentDictionary();
+
+  return {
+    title: dictionary.checkout.cancelledTitle,
+    description: dictionary.checkout.cancelledText,
+  };
+}
 
 type CheckoutCancelledPageProps = {
   searchParams?: Promise<{

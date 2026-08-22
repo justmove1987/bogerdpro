@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import type { Metadata } from "next";
 import { ClearCartOnMount } from "@/components/cart/clear-cart-on-mount";
 import { getCurrentDictionary } from "@/lib/i18n/locale";
 
-export const metadata = {
-  title: "Pago correcto",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dictionary = await getCurrentDictionary();
+
+  return {
+    title: dictionary.checkout.successTitle,
+    description: dictionary.checkout.successText,
+  };
+}
 
 export default async function CheckoutSuccessPage() {
   const dictionary = await getCurrentDictionary();
