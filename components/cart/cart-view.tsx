@@ -17,7 +17,12 @@ function cartPayload(items: ReturnType<typeof useCart>["items"]) {
   return { items: items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })) };
 }
 
-export function CartView({ labels }: { labels: Dictionary["cart"] & Pick<Dictionary["product"], "standardVariant"> }) {
+type CartViewProps = {
+  canCheckout: boolean;
+  labels: Dictionary["cart"] & Pick<Dictionary["product"], "standardVariant">;
+};
+
+export function CartView({ canCheckout, labels }: CartViewProps) {
   const { items, subtotalCents, totalCents, updateQuantity, removeItem, clearCart } = useCart();
   const [error, setError] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -25,6 +30,12 @@ export function CartView({ labels }: { labels: Dictionary["cart"] & Pick<Diction
 
   async function checkout() {
     setError("");
+
+    if (!canCheckout) {
+      setError(labels.loginRequiredText);
+      return;
+    }
+
     setIsCheckingOut(true);
 
     try {
@@ -160,17 +171,37 @@ export function CartView({ labels }: { labels: Dictionary["cart"] & Pick<Diction
             <span>{labels.totalBase}</span>
             <span>{formatMoney(totalCents)}</span>
           </div>
+          <p className="mt-2 rounded-[var(--radius-sm)] bg-[#f7f5f0] px-3 py-2 text-xs leading-5 text-[#62615d]">
+            {labels.taxNotice}
+          </p>
+          {!canCheckout ? (
+            <div className="mt-4 rounded-[var(--radius-sm)] border border-[#d8e7fb] bg-[#f4f8ff] px-3 py-3 text-sm leading-6 text-[#31516f]">
+              <p className="font-semibold text-[#17436b]">{labels.loginRequiredTitle}</p>
+              <p className="mt-1">{labels.loginRequiredText}</p>
+            </div>
+          ) : null}
           {error ? <p className="mt-4 rounded-[var(--radius-sm)] bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-          <button
-            type="button"
-            onClick={checkout}
-            disabled={isBusy}
-            className="premium-focus mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-5 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-50"
-            style={{ color: "#ffffff" }}
-          >
-            <span style={{ color: "#ffffff" }}>{isCheckingOut ? labels.redirecting : labels.pay}</span>
-            <ArrowRight size={17} color="#ffffff" />
-          </button>
+          {canCheckout ? (
+            <button
+              type="button"
+              onClick={checkout}
+              disabled={isBusy}
+              className="premium-focus mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-5 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-50"
+              style={{ color: "#ffffff" }}
+            >
+              <span style={{ color: "#ffffff" }}>{isCheckingOut ? labels.redirecting : labels.pay}</span>
+              <ArrowRight size={17} color="#ffffff" />
+            </button>
+          ) : (
+            <Link
+              href="/login?callbackUrl=/cart"
+              className="premium-focus mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-5 text-sm font-semibold text-white transition hover:bg-black"
+              style={{ color: "#ffffff" }}
+            >
+              <span style={{ color: "#ffffff" }}>{labels.loginRequiredAction}</span>
+              <ArrowRight size={17} color="#ffffff" />
+            </Link>
+          )}
           <button
             type="button"
             onClick={requestQuote}

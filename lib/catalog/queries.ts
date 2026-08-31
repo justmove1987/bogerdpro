@@ -4,6 +4,14 @@ import { catalogGroupKeys, catalogGroupTerms } from "@/lib/catalog/catalog-group
 import { colorGroupKeys, sizeGroupKeys } from "@/lib/catalog/filter-groups";
 
 export const PRODUCTS_PER_PAGE = 12;
+const pendingImagePath = "/images/products/product-image-pending.svg";
+const visibleProductImageWhere = {
+  images: {
+    some: {
+      url: { not: pendingImagePath },
+    },
+  },
+} as const;
 
 export type CatalogSearchParams = {
   q?: string;
@@ -22,6 +30,7 @@ export type CatalogSearchParams = {
 };
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
+type CatalogFacetKey = "catalog" | "category" | "brand" | "color" | "size" | "gender" | "material" | "attribute" | "price";
 
 function arrayParam(value: string | string[] | undefined) {
   if (!value) return [];
@@ -125,6 +134,7 @@ function buildProductWhere(filters: CatalogSearchParams, locale: Locale = defaul
   return {
     isActive: true,
     status: "ACTIVE" as const,
+    ...visibleProductImageWhere,
     ...catalogGroupFilter,
     ...(typeof filters.minPrice === "number" ? { maxPriceCents: { gte: Math.round(filters.minPrice * 100) } } : {}),
     ...(typeof filters.maxPrice === "number" ? { minPriceCents: { lte: Math.round(filters.maxPrice * 100) } } : {}),
@@ -176,6 +186,27 @@ function buildProductWhere(filters: CatalogSearchParams, locale: Locale = defaul
       : {}),
     ...(Object.keys(variantFilters).length > 1 ? { variants: { some: variantFilters } } : {}),
   };
+}
+
+function buildFacetWhere(filters: CatalogSearchParams, omittedFilter: CatalogFacetKey, locale: Locale = defaultLocale) {
+  return buildProductWhere(
+    {
+      ...filters,
+      catalog: omittedFilter === "catalog" ? [] : filters.catalog,
+      category: omittedFilter === "category" ? [] : filters.category,
+      brand: omittedFilter === "brand" ? [] : filters.brand,
+      color: omittedFilter === "color" ? [] : filters.color,
+      size: omittedFilter === "size" ? [] : filters.size,
+      gender: omittedFilter === "gender" ? [] : filters.gender,
+      material: omittedFilter === "material" ? [] : filters.material,
+      attribute: omittedFilter === "attribute" ? [] : filters.attribute,
+      minPrice: omittedFilter === "price" ? undefined : filters.minPrice,
+      maxPrice: omittedFilter === "price" ? undefined : filters.maxPrice,
+      page: 1,
+      sort: "relevance",
+    },
+    locale,
+  );
 }
 
 function productOrderBy(sort: CatalogSearchParams["sort"]) {
@@ -249,14 +280,13 @@ export async function getCatalogFilters() {
 }
 
 export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
-  const facetWhere = buildProductWhere(
-    {
-      ...filters,
-      page: 1,
-      sort: "relevance",
-    },
-    locale,
-  );
+  const categoryFacetWhere = buildFacetWhere(filters, "category", locale);
+  const brandFacetWhere = buildFacetWhere(filters, "brand", locale);
+  const colorFacetWhere = buildFacetWhere(filters, "color", locale);
+  const sizeFacetWhere = buildFacetWhere(filters, "size", locale);
+  const genderFacetWhere = buildFacetWhere(filters, "gender", locale);
+  const materialFacetWhere = buildFacetWhere(filters, "material", locale);
+  const attributeFacetWhere = buildFacetWhere(filters, "attribute", locale);
 
   const categories = await prisma.category.findMany({
     orderBy: [{ parentId: "asc" }, { name: "asc" }],
@@ -266,7 +296,7 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, l
       slug: true,
       parentId: true,
       translations: { where: { locale }, take: 1, select: { name: true, description: true } },
-      _count: { select: { products: { where: facetWhere } } },
+      _count: { select: { products: { where: categoryFacetWhere } } },
     },
   });
   const brands = await prisma.brand.findMany({
@@ -275,29 +305,29 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, l
       name: true,
       slug: true,
       translations: { where: { locale }, take: 1, select: { name: true } },
-      _count: { select: { products: { where: facetWhere } } },
+      _count: { select: { products: { where: brandFacetWhere } } },
     },
   });
   const colors = await prisma.productVariant.findMany({
-    where: { isActive: true, product: facetWhere, colorGroup: { not: null } },
+    where: { isActive: true, product: colorFacetWhere, colorGroup: { not: null } },
     distinct: ["colorGroup"],
     orderBy: { colorGroup: "asc" },
     select: { colorGroup: true },
   });
   const sizes = await prisma.productVariant.findMany({
-    where: { isActive: true, product: facetWhere, sizeGroup: { not: null } },
+    where: { isActive: true, product: sizeFacetWhere, sizeGroup: { not: null } },
     distinct: ["sizeGroup"],
     orderBy: { sizeGroup: "asc" },
     select: { sizeGroup: true },
   });
   const genders = await prisma.product.findMany({
-    where: { ...facetWhere, gender: { not: null } },
+    where: { ...genderFacetWhere, gender: { not: null } },
     distinct: ["gender"],
     orderBy: { gender: "asc" },
     select: { gender: true },
   });
   const materials = await prisma.product.findMany({
-    where: { ...facetWhere, material: { not: null } },
+    where: { ...materialFacetWhere, material: { not: null } },
     distinct: ["material"],
     orderBy: { material: "asc" },
     select: { material: true },
@@ -311,7 +341,7 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, l
         where: {
           products: {
             some: {
-              product: facetWhere,
+              product: attributeFacetWhere,
             },
           },
         },
@@ -351,7 +381,7 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, l
 
 export async function getFeaturedProducts(take = 3, locale: Locale = defaultLocale) {
   const products = await prisma.product.findMany({
-    where: { isActive: true, status: "ACTIVE", isFeatured: true },
+    where: { isActive: true, status: "ACTIVE", isFeatured: true, ...visibleProductImageWhere },
     orderBy: { createdAt: "desc" },
     take,
     select: {
@@ -381,7 +411,7 @@ export async function getFeaturedProducts(take = 3, locale: Locale = defaultLoca
 
 export async function getProductBySlug(slug: string, locale: Locale = defaultLocale) {
   const product = await prisma.product.findFirst({
-    where: { slug, isActive: true, status: "ACTIVE" },
+    where: { slug, isActive: true, status: "ACTIVE", ...visibleProductImageWhere },
     include: {
       translations: { where: { locale }, take: 1 },
       category: { include: { translations: { where: { locale }, take: 1 } } },
@@ -435,6 +465,7 @@ export async function getRelatedProducts(product: { id: string; categoryId: stri
       id: { not: product.id },
       isActive: true,
       status: "ACTIVE",
+      ...visibleProductImageWhere,
       OR: relatedConditions,
     },
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],

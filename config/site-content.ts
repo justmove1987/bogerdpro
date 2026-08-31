@@ -52,8 +52,8 @@ export const catalogCollections = [
     href: "/catalog#industria-construccion-y-logistica",
     sourceUrl: "https://bogerdpro.com/industria-construccion-y-logistica/",
     description: "Prendas y protección para jornadas intensivas y entornos técnicos.",
-    image: "/images/sectors/planta-industrial-operario.jpg",
-    imageAlt: "Profesionales trabajando en entorno industrial",
+    image: "/images/catalogs/industria-construccion-logistica-equipo.png",
+    imageAlt: "Equipo profesional de industria, construcción y logística",
     icon: Building2,
   },
   {
@@ -61,8 +61,8 @@ export const catalogCollections = [
     href: "/catalog#sanidad-y-servicios",
     sourceUrl: "https://bogerdpro.com/sanidad-y-servicios/",
     description: "Uniformidad profesional para equipos asistenciales y servicios.",
-    image: "/images/sectors/industria-alimentaria-proteccion.jpg",
-    imageAlt: "Vestuario profesional con casco de seguridad",
+    image: "/images/catalogs/sanidad-servicios-uniformes.png",
+    imageAlt: "Equipo sanitario con uniformes profesionales",
     icon: HeartPulse,
   },
   {
@@ -70,8 +70,8 @@ export const catalogCollections = [
     href: "/catalog#sport-casual-promo-y-eventos",
     sourceUrl: "https://bogerdpro.com/sport-casual-promo-y-eventos/",
     description: "Imagen corporativa, promoción y prendas para equipos visibles.",
-    image: "/images/catalogs/alta-visibilidad-naranja.jpg",
-    imageAlt: "Prenda naranja de alta visibilidad",
+    image: "/images/catalogs/sport-casual-promo-eventos.png",
+    imageAlt: "Prendas sport, casual y promocionales para equipos",
     icon: Shirt,
   },
 ];
@@ -144,7 +144,7 @@ export const companyStats = [
 
 export const contactInfo = {
   phone: "(+34) 621 22 87 09",
-  email: "info@bogerdpro.com",
+  email: "rbogerd@bogerdpro.com",
   office: "Av. Montgó 68 B, 17130 L'Escala, Girona, España",
 };
 
@@ -167,9 +167,9 @@ const siteContentTranslations: Record<Locale, {
       { title: "Calçat de treball", description: "Calçat professional resistent, còmode i certificat.", imageAlt: "Detall de pantaló tècnic amb genollera" },
       { title: "Equips de protecció", description: "EPI i solucions de seguretat per a equips exigents.", imageAlt: "Professional soldant amb equip de protecció" },
       { title: "Hostaleria i restauració", description: "Vestuari funcional, elegant i durador per a servei professional.", imageAlt: "Detall de pantaló tècnic professional" },
-      { title: "Indústria, construcció i logística", description: "Peces i protecció per a jornades intensives i entorns tècnics.", imageAlt: "Professionals treballant en entorn industrial" },
-      { title: "Sanitat i serveis", description: "Uniformitat professional per a equips assistencials i serveis.", imageAlt: "Vestuari professional amb casc de seguretat" },
-      { title: "Sport, casual, promo i esdeveniments", description: "Imatge corporativa, promoció i peces per a equips visibles.", imageAlt: "Peça taronja d'alta visibilitat" },
+      { title: "Indústria, construcció i logística", description: "Peces i protecció per a jornades intensives i entorns tècnics.", imageAlt: "Equip professional d'indústria, construcció i logística" },
+      { title: "Sanitat i serveis", description: "Uniformitat professional per a equips assistencials i serveis.", imageAlt: "Equip sanitari amb uniformes professionals" },
+      { title: "Sport, casual, promo i esdeveniments", description: "Imatge corporativa, promoció i peces per a equips visibles.", imageAlt: "Peces sport, casual i promocionals per a equips" },
     ],
     pillars: [
       { title: "Més de 20 anys d'experiència", text: "Coneixem les necessitats reals de cada sector i oferim solucions provades i efectives." },
@@ -191,9 +191,9 @@ const siteContentTranslations: Record<Locale, {
       { title: "Work footwear", description: "Resistant, comfortable and certified professional footwear.", imageAlt: "Detail of technical trousers with knee pad" },
       { title: "Protective equipment", description: "PPE and safety solutions for demanding teams.", imageAlt: "Professional welding with protective equipment" },
       { title: "Hospitality and catering", description: "Functional, elegant and durable clothing for professional service.", imageAlt: "Detail of professional technical trousers" },
-      { title: "Industry, construction and logistics", description: "Garments and protection for intensive days and technical environments.", imageAlt: "Professionals working in an industrial environment" },
-      { title: "Healthcare and services", description: "Professional uniforms for care teams and services.", imageAlt: "Professional clothing with safety helmet" },
-      { title: "Sport, casual, promo and events", description: "Corporate image, promotion and garments for visible teams.", imageAlt: "Orange high-visibility garment" },
+      { title: "Industry, construction and logistics", description: "Garments and protection for intensive days and technical environments.", imageAlt: "Professional industry, construction and logistics team" },
+      { title: "Healthcare and services", description: "Professional uniforms for care teams and services.", imageAlt: "Healthcare team wearing professional uniforms" },
+      { title: "Sport, casual, promo and events", description: "Corporate image, promotion and garments for visible teams.", imageAlt: "Sport, casual and promotional garments for teams" },
     ],
     pillars: [
       { title: "Over 20 years of experience", text: "We understand the real needs of each sector and offer proven, effective solutions." },
@@ -215,9 +215,9 @@ const siteContentTranslations: Record<Locale, {
       { title: "Werkschoenen", description: "Sterk, comfortabel en gecertificeerd professioneel schoeisel.", imageAlt: "Detail van technische broek met kniebeschermer" },
       { title: "Beschermingsmiddelen", description: "PBM en veiligheidsoplossingen voor veeleisende teams.", imageAlt: "Professional aan het lassen met beschermingsmiddelen" },
       { title: "Horeca en catering", description: "Functionele, elegante en duurzame kleding voor professionele service.", imageAlt: "Detail van professionele technische broek" },
-      { title: "Industrie, bouw en logistiek", description: "Kleding en bescherming voor intensieve werkdagen en technische omgevingen.", imageAlt: "Professionals aan het werk in een industriële omgeving" },
-      { title: "Zorg en diensten", description: "Professionele uniformen voor zorgteams en dienstverleners.", imageAlt: "Professionele kleding met veiligheidshelm" },
-      { title: "Sport, casual, promo en events", description: "Corporate uitstraling, promotie en kleding voor zichtbare teams.", imageAlt: "Oranje hoge-zichtbaarheidskleding" },
+      { title: "Industrie, bouw en logistiek", description: "Kleding en bescherming voor intensieve werkdagen en technische omgevingen.", imageAlt: "Professioneel team voor industrie, bouw en logistiek" },
+      { title: "Zorg en diensten", description: "Professionele uniformen voor zorgteams en dienstverleners.", imageAlt: "Zorgteam met professionele uniformen" },
+      { title: "Sport, casual, promo en events", description: "Corporate uitstraling, promotie en kleding voor zichtbare teams.", imageAlt: "Sportieve, casual en promotionele kleding voor teams" },
     ],
     pillars: [
       { title: "Meer dan 20 jaar ervaring", text: "We kennen de echte behoeften van elke sector en bieden bewezen, effectieve oplossingen." },

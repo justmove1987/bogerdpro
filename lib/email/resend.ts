@@ -17,7 +17,7 @@ function recipients(value: string | string[]) {
 
 export async function sendTransactionalEmail(input: SendEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "BogerdPro <no-reply@bogerdpro.com>";
+  const from = process.env.EMAIL_FROM ?? "BogerdPro <rbogerd@bogerdpro.com>";
 
   if (!apiKey) {
     console.log("[email:dry-run]", {

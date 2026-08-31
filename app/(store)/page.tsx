@@ -3,9 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { ProductBrowser } from "@/components/catalog/product-browser";
-import { VisualSearch } from "@/components/catalog/visual-search";
 import { Reveal } from "@/components/motion/reveal";
-import { HeroActionPanel } from "@/components/home/hero-action-panel";
 import { getSiteContent } from "@/config/site-content";
 import { getCatalogFiltersForSearch, getCatalogProducts, parseCatalogSearchParams } from "@/lib/catalog/queries";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
@@ -41,49 +39,53 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div>
-      <section className="border-b border-[#e7e2d8] bg-[#f7f5f0]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
+      <section className="relative isolate flex min-h-[calc(70svh-72px)] overflow-hidden border-b border-[#e7e2d8] bg-[#151515] text-white sm:min-h-[calc(70svh-76px)]">
+        <Image
+          src="/images/catalogs/construccion-alta-visibilidad.jpg"
+          alt={dictionary.home.heroImageAlt}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[52%_46%]"
+        />
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(to_top,#111_0%,transparent_100%)] opacity-70" />
+
+        <div className="relative mx-auto flex w-full max-w-7xl items-end px-4 pb-10 pt-24 sm:px-6 sm:pb-14 lg:pb-16">
           <Reveal>
-            <div className="flex min-h-[520px] flex-col justify-center">
-              <p className="inline-flex w-fit rounded-full border border-[#d8d1c5] bg-white px-3 py-1 text-sm font-semibold text-[var(--accent)]">
+            <div className="max-w-3xl">
+              <p className="inline-flex w-fit rounded-full border border-white/25 bg-white/12 px-3 py-1 text-sm font-semibold text-white shadow-sm backdrop-blur">
                 {dictionary.home.eyebrow}
               </p>
-              <h1 className="mt-6 max-w-4xl text-5xl font-semibold leading-[1.04] tracking-tight text-[#151515] sm:text-6xl lg:text-7xl">
+              <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.04] tracking-tight text-white sm:text-6xl lg:text-7xl">
                 {dictionary.home.title}
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-[#62615d]">
+              <p className="mt-5 max-w-2xl text-base leading-7 text-white/86 sm:text-lg sm:leading-8">
                 {dictionary.home.text}
               </p>
-              <div className="mt-8 max-w-2xl">
-                <VisualSearch actionPath="/" labels={dictionary.search} />
-              </div>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-wrap gap-3">
                 <Link
-                  href="/catalog"
-                  className="premium-focus inline-flex h-12 min-w-48 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#151515] px-6 text-sm font-semibold text-white shadow-[0_16px_36px_rgb(21_21_21/0.2)] transition duration-200 hover:-translate-y-0.5 hover:bg-black [&_*]:text-white"
-                  style={{ color: "#ffffff" }}
+                  href="#products"
+                  className="premium-focus inline-flex h-12 min-w-44 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-white px-6 text-sm font-semibold text-[#151515] shadow-[0_18px_44px_rgb(0_0_0/0.26)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#f6f2ea] [&_*]:text-[#151515]"
+                  style={{ color: "#151515" }}
                 >
-                  <span style={{ color: "#ffffff" }}>{dictionary.home.viewCatalogs}</span>
-                  <ArrowRight size={18} color="#ffffff" />
+                  <span style={{ color: "#151515" }}>{dictionary.home.viewProducts}</span>
+                  <ArrowRight size={18} color="#151515" />
                 </Link>
                 <Link
-                  href="#por-que"
-                  className="premium-focus inline-flex h-12 items-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-5 text-sm font-semibold text-[#151515] transition duration-200 hover:-translate-y-0.5 hover:border-[#151515]"
+                  href="/catalog"
+                  className="premium-focus inline-flex h-12 items-center gap-2 rounded-[var(--radius-sm)] border border-white/28 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:bg-white/18"
                 >
-                  {dictionary.home.why}
+                  {dictionary.home.viewCatalogs}
                 </Link>
               </div>
             </div>
           </Reveal>
-
-          <Reveal delay={0.05}>
-            <HeroActionPanel labels={dictionary.home} stats={siteContent.companyStats} />
-          </Reveal>
         </div>
       </section>
 
-      <section className="border-y border-[#e7e2d8] bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+      <section className="border-b border-[#e7e2d8] bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
           <ProductBrowser
             filters={filters}
             catalog={catalog}
@@ -108,13 +110,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           {siteContent.catalogCollections.map((item, index) => (
             <Reveal key={item.href} delay={index * 0.02}>
               <Link href={item.href} className="group block h-full overflow-hidden rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white transition duration-200 hover:-translate-y-1 hover:border-[var(--accent)] hover:shadow-[var(--shadow-soft)]">
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#e8edf4]">
+                <div className="relative aspect-[5/4] overflow-hidden bg-[#e8edf4]">
                   <Image
                     src={item.image}
                     alt={item.imageAlt}
                     fill
                     sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover transition duration-300 group-hover:scale-[1.03]"
+                    className="object-cover object-[center_34%] transition duration-300 group-hover:scale-[1.03]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
                   <span className="absolute left-4 top-4 grid h-11 w-11 place-items-center rounded-[var(--radius-sm)] bg-white/92 text-[var(--accent)] shadow-sm">

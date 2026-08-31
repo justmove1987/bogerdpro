@@ -20,6 +20,7 @@ type AccountOrder = {
     name: string;
     sku: string | null;
     quantity: number;
+    productSlug: string | null;
   }[];
 };
 
@@ -153,7 +154,16 @@ export function AccountOrdersHistory({ orders, labels }: AccountOrdersHistoryPro
                     <ul className="mt-3 grid gap-2 text-sm text-[#62615d]">
                       {order.items.map((item) => (
                         <li key={item.id} className="flex flex-col gap-1 rounded-[var(--radius-sm)] bg-white px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-                          <span className="font-medium text-[#151515]">{item.name}</span>
+                          {item.productSlug ? (
+                            <Link
+                              href={`/product/${item.productSlug}`}
+                              className="font-medium text-[#151515] underline-offset-4 transition hover:text-[var(--accent)] hover:underline"
+                            >
+                              {item.name}
+                            </Link>
+                          ) : (
+                            <span className="font-medium text-[#151515]">{item.name}</span>
+                          )}
                           <span>
                             {item.sku ?? "-"} · {labels.quantity}: {item.quantity}
                           </span>

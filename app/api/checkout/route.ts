@@ -26,8 +26,16 @@ export async function POST(request: Request) {
 
   const body = parsedBody.data;
   const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Debes iniciar sesión o crear una cuenta para procesar el pago." },
+      { status: 401 },
+    );
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
-  const prepared = await prepareCartOrder(body.items, session?.user?.id);
+  const prepared = await prepareCartOrder(body.items, session.user.id);
 
   if ("error" in prepared) {
     return NextResponse.json({ error: prepared.error }, { status: 400 });
@@ -37,7 +45,7 @@ export async function POST(request: Request) {
   const order = await prisma.order.create({
     data: {
       orderNumber: createOrderNumber(),
-      userId: session?.user?.id ?? null,
+      userId: session.user.id,
       email: customerEmail,
       customerName: session?.user?.name ?? null,
       status: "PENDING",

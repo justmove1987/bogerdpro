@@ -59,8 +59,8 @@ Variables recomendadas:
 
 ```env
 RESEND_API_KEY=""
-EMAIL_FROM="BogerdPro <no-reply@bogerdpro.com>"
-ORDER_NOTIFICATION_EMAIL="admin@bogerdpro.com"
+EMAIL_FROM="BogerdPro <rbogerd@bogerdpro.com>"
+ORDER_NOTIFICATION_EMAIL="rbogerd@bogerdpro.com"
 ADMIN_EMAIL=""
 ADMIN_PASSWORD=""
 ```
@@ -250,8 +250,8 @@ Para producción:
 
 ```env
 RESEND_API_KEY=""
-EMAIL_FROM="BogerdPro <no-reply@tudominio.com>"
-ORDER_NOTIFICATION_EMAIL="admin@tudominio.com"
+EMAIL_FROM="BogerdPro <rbogerd@bogerdpro.com>"
+ORDER_NOTIFICATION_EMAIL="rbogerd@bogerdpro.com"
 ```
 
 ## SEO
@@ -286,7 +286,7 @@ Medidas incluidas:
 - Límite de tamaño en CSV.
 - Validación de formato y tamaño en uploads.
 - APIs admin protegidas con `requireAdmin`.
-- Carrito sin login, con validación server-side de variantes activas, cantidades y precios antes de pagar.
+- Catálogo y carrito visibles sin login, con checkout protegido por cuenta y validación server-side de variantes activas, cantidades y precios antes de pagar.
 
 Pendientes recomendados antes de producción:
 

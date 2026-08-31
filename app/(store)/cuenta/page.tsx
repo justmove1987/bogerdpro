@@ -99,6 +99,11 @@ export default async function AccountPage() {
           name: true,
           sku: true,
           quantity: true,
+          product: {
+            select: {
+              slug: true,
+            },
+          },
         },
       },
     },
@@ -161,6 +166,13 @@ export default async function AccountPage() {
       <AccountOrdersHistory
         orders={orders.map((order) => ({
           ...order,
+          items: order.items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            sku: item.sku,
+            quantity: item.quantity,
+            productSlug: item.product?.slug ?? null,
+          })),
           createdAtLabel: order.createdAt.toLocaleDateString(locale === "en" ? "en-GB" : locale === "nl" ? "nl-NL" : locale === "ca" ? "ca-ES" : "es-ES"),
           searchText: [
             order.orderNumber,

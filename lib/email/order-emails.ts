@@ -1,4 +1,5 @@
 import type { Order, OrderItem } from "@/generated/prisma/client";
+import { contactInfo } from "@/config/site-content";
 import { sendTransactionalEmail } from "@/lib/email/resend";
 
 type OrderWithItems = Order & {
@@ -69,7 +70,7 @@ export async function sendOrderConfirmationEmail(order: OrderWithItems) {
 }
 
 export async function sendAdminOrderNotificationEmail(order: OrderWithItems) {
-  const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL ?? process.env.ADMIN_EMAIL;
+  const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL ?? process.env.ADMIN_EMAIL ?? contactInfo.email;
   if (!adminEmail) return;
 
   const html = emailShell(
@@ -100,7 +101,7 @@ export async function sendAdminOrderNotificationEmail(order: OrderWithItems) {
 }
 
 export async function sendAdminQuoteRequestEmail(order: OrderWithItems) {
-  const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL ?? process.env.ADMIN_EMAIL;
+  const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL ?? process.env.ADMIN_EMAIL ?? contactInfo.email;
   if (!adminEmail) return;
 
   const html = emailShell(
