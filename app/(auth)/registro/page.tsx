@@ -1,6 +1,11 @@
 import { RegisterForm } from "@/components/auth/register-form";
 import { getCurrentDictionary } from "@/lib/i18n/locale";
 
+export const metadata = {
+  title: "Crear cuenta",
+  robots: { index: false, follow: false },
+};
+
 type RegisterPageProps = {
   searchParams?: Promise<{
     callbackUrl?: string;

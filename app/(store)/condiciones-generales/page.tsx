@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { generalTerms } from "@/config/legal-content";
-import { getCurrentDictionary } from "@/lib/i18n/locale";
+import { getGeneralTerms } from "@/config/legal-content";
+import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dictionary = await getCurrentDictionary();
@@ -10,11 +10,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: dictionary.legal.termsTitle,
     description: dictionary.legal.termsDescription,
+    alternates: { canonical: "/condiciones-generales" },
   };
 }
 
 export default async function GeneralTermsPage() {
+  const locale = await getCurrentLocale();
   const dictionary = await getCurrentDictionary();
+  const generalTerms = getGeneralTerms(locale);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 md:py-16">
@@ -62,7 +65,7 @@ export default async function GeneralTermsPage() {
               <p className="text-base leading-7 text-[var(--muted)]">{section.closing}</p>
             ) : null}
 
-            {section.title === "22. Protección de datos" ? (
+            {section.title.startsWith("22.") ? (
               <Link href="/politica-privacidad" className="text-sm font-semibold text-[var(--accent)] transition hover:text-[var(--ink)]">
                 {dictionary.legal.viewPrivacy}
               </Link>

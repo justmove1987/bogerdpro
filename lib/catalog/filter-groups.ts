@@ -29,8 +29,24 @@ export const sizeGroupKeys = [
   "one-size",
 ] as const;
 
+export const materialGroupKeys = [
+  "cotton",
+  "polyester",
+  "polyamide",
+  "stretch",
+  "softshell",
+  "fleece",
+  "leather",
+  "technical-coating",
+  "rubber",
+  "metal",
+  "wood",
+  "paper-cardboard",
+] as const;
+
 export type ColorGroupKey = (typeof colorGroupKeys)[number];
 export type SizeGroupKey = (typeof sizeGroupKeys)[number];
+export type MaterialGroupKey = (typeof materialGroupKeys)[number];
 
 function normalized(value?: string | null) {
   return value
@@ -84,6 +100,26 @@ export function normalizeSizeGroup(size?: string | null): SizeGroupKey | null {
   if (compact === "xl") return "xl";
   if (["xxl", "2xl"].includes(compact)) return "2xl";
   if (/^(3xl|4xl|5xl|6xl|7xl|8xl|9xl)/.test(compact)) return "3xl-plus";
+
+  return null;
+}
+
+export function normalizeMaterialGroup(material?: string | null): MaterialGroupKey | null {
+  const value = normalized(material);
+  if (!value || value === "." || value === "#n/d" || value === "n/d") return null;
+
+  if (includesAny(value, ["algodon", "cotton"])) return "cotton";
+  if (includesAny(value, ["poliester", "polyester", "reciclado", "recycled"])) return "polyester";
+  if (includesAny(value, ["poliamida", "polyamide", "nylon"])) return "polyamide";
+  if (includesAny(value, ["elastano", "elastane", "spandex", "stretch"])) return "stretch";
+  if (includesAny(value, ["softshell"])) return "softshell";
+  if (includesAny(value, ["polar", "fleece"])) return "fleece";
+  if (includesAny(value, ["piel", "cuero", "leather", "serraje", "nobuck", "nubuck"])) return "leather";
+  if (includesAny(value, ["poliuretano", "polyurethane", "pvc", "nitrilo", "nitrile", "latex", "neopreno", "neoprene", "vinilo", "vinyl", "acrilica", "acrylic"])) return "technical-coating";
+  if (includesAny(value, ["caucho", "rubber", "goma", "eva", "tpr"])) return "rubber";
+  if (includesAny(value, ["metal", "acero", "steel", "aluminio", "aluminium", "zamak"])) return "metal";
+  if (includesAny(value, ["madera", "wood"])) return "wood";
+  if (includesAny(value, ["papel", "paper", "carton", "cardboard"])) return "paper-cardboard";
 
   return null;
 }

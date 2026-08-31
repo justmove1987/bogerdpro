@@ -1,14 +1,30 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Mail, MapPin, Phone, Send } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { contactInfo } from "@/config/site-content";
-import { getCurrentDictionary } from "@/lib/i18n/locale";
+import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
+import { absoluteUrl, openGraphLocales, siteName } from "@/lib/seo/site";
 
-export const metadata = {
-  title: "Contacto | BogerdPro",
-  description: "Contacta con BogerdPro para solicitar asesoramiento, catálogos o presupuesto de vestuario laboral y EPI.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getCurrentLocale();
+  const dictionary = await getCurrentDictionary();
+  const description = dictionary.contact.text;
+
+  return {
+    title: `${dictionary.nav.contact} | BogerdPro`,
+    description,
+    alternates: { canonical: "/contacto" },
+    openGraph: {
+      title: `${dictionary.nav.contact} | ${siteName}`,
+      description,
+      url: absoluteUrl("/contacto"),
+      locale: openGraphLocales[locale],
+    },
+  };
+}
 
 type ContactLabels = Awaited<ReturnType<typeof getCurrentDictionary>>["contact"];
 
@@ -44,6 +60,24 @@ export default async function ContactPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          name: siteName,
+          url: absoluteUrl("/contacto"),
+          telephone: "+34621228709",
+          email: contactInfo.email,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Av. Montgo 68 B",
+            postalCode: "17130",
+            addressLocality: "L'Escala",
+            addressRegion: "Girona",
+            addressCountry: "ES",
+          },
+        }}
+      />
       <Breadcrumbs items={[{ href: "/", label: dictionary.nav.home }, { label: dictionary.contact.breadcrumb }]} />
 
       <section className="mt-8 grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">

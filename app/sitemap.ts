@@ -4,8 +4,17 @@ import { prisma } from "@/lib/db/prisma";
 import { absoluteUrl } from "@/lib/seo/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const pendingImagePath = "/images/products/product-image-pending.svg";
   const products = await prisma.product.findMany({
-    where: { isActive: true, status: "ACTIVE" },
+    where: {
+      isActive: true,
+      status: "ACTIVE",
+      images: {
+        some: {
+          url: { not: pendingImagePath },
+        },
+      },
+    },
     select: { slug: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },
     take: 5000,

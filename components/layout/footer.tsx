@@ -56,9 +56,6 @@ export function Footer({
         <div>
           <p className="text-sm font-semibold">{labels.company}</p>
           <div className="mt-4 grid gap-2 text-sm text-white/62">
-            <Link href="/#empresa" className="transition hover:text-white">{labels.about}</Link>
-            <Link href="/#por-que" className="transition hover:text-white">{labels.why}</Link>
-            <Link href="/catalog" className="transition hover:text-white">{labels.products}</Link>
             <Link href="/contacto" className="transition hover:text-white">{labels.contact}</Link>
             <Link href="/condiciones-generales" className="transition hover:text-white">{labels.terms}</Link>
             <Link href="/politica-privacidad" className="transition hover:text-white">{labels.privacy}</Link>

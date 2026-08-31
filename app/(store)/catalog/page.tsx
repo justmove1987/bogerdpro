@@ -6,20 +6,27 @@ import { DownloadableCatalogs } from "@/components/catalog/downloadable-catalogs
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { getSiteContent } from "@/config/site-content";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
-import { absoluteUrl, siteName } from "@/lib/seo/site";
+import { absoluteUrl, openGraphLocales, siteName } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Catálogos de vestuario laboral y EPI",
-  description:
-    "Descarga catálogos profesionales por marca, sector y tipo de producto: alta visibilidad, calzado, protección, hostelería, sanidad e industria.",
-  alternates: { canonical: "/catalog" },
-  openGraph: {
-    title: `Catálogos de vestuario laboral y EPI | ${siteName}`,
-    description: "Colecciones profesionales de BogerdPro para encontrar vestuario laboral y equipos de protección por categoría.",
-    url: absoluteUrl("/catalog"),
-    images: [{ url: absoluteUrl("/images/catalogs/alta-visibilidad-equipo.jpg"), alt: "Catálogos BogerdPro" }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getCurrentLocale();
+  const dictionary = await getCurrentDictionary();
+  const title = `${dictionary.catalog.catalogs} de ${dictionary.catalog.workwear}`;
+  const description = dictionary.catalog.pageText;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: "/catalog" },
+    openGraph: {
+      title: `${title} | ${siteName}`,
+      description,
+      url: absoluteUrl("/catalog"),
+      locale: openGraphLocales[locale],
+      images: [{ url: absoluteUrl("/images/catalogs/alta-visibilidad-equipo.jpg"), alt: "Catálogos BogerdPro" }],
+    },
+  };
+}
 
 export default async function CatalogPage() {
   const locale = await getCurrentLocale();

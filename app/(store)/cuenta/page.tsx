@@ -11,6 +11,11 @@ import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Mi cuenta",
+  robots: { index: false, follow: false },
+};
+
 export default async function AccountPage() {
   const session = await getServerSession(authOptions);
   const dictionary = await getCurrentDictionary();

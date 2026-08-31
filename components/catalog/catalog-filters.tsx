@@ -27,7 +27,10 @@ type CatalogFiltersData = {
   colors: string[];
   sizes: string[];
   genders: string[];
-  materials: string[];
+  materials: {
+    slug: string;
+    count: number;
+  }[];
   attributes: {
     name: string;
     slug: string;
@@ -233,7 +236,14 @@ export function CatalogFilters({
           <FilterGroup title={labels.material} count={selectedCount(selected.material)}>
             <div className="grid grid-cols-1 gap-1">
               {filters.materials.map((material) => (
-                <CheckboxFilter key={material} name="material" value={material} label={material} checked={isSelected(selected.material, material)} />
+                <CheckboxFilter
+                  key={material.slug}
+                  name="material"
+                  value={material.slug}
+                  label={groupLabel(labels.materialGroups, material.slug)}
+                  count={material.count}
+                  checked={isSelected(selected.material, material.slug)}
+                />
               ))}
             </div>
           </FilterGroup>

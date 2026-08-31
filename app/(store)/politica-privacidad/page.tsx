@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { privacyPolicy } from "@/config/legal-content";
-import { getCurrentDictionary } from "@/lib/i18n/locale";
+import { getPrivacyPolicy } from "@/config/legal-content";
+import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dictionary = await getCurrentDictionary();
@@ -9,11 +9,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: dictionary.legal.privacyTitle,
     description: dictionary.legal.privacyDescription,
+    alternates: { canonical: "/politica-privacidad" },
   };
 }
 
 export default async function PrivacyPolicyPage() {
+  const locale = await getCurrentLocale();
   const dictionary = await getCurrentDictionary();
+  const privacyPolicy = getPrivacyPolicy(locale);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 md:py-16">

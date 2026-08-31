@@ -10,6 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: dictionary.checkout.cancelledTitle,
     description: dictionary.checkout.cancelledText,
+    robots: { index: false, follow: false },
   };
 }
 

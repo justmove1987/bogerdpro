@@ -6,7 +6,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { DownloadableCatalogs } from "@/components/catalog/downloadable-catalogs";
 import { downloadableCatalogSections, getDownloadableCatalogSections } from "@/config/downloadable-catalogs";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
-import { absoluteUrl, siteName } from "@/lib/seo/site";
+import { absoluteUrl, openGraphLocales, siteName } from "@/lib/seo/site";
 
 type CatalogSectionPageProps = {
   params: Promise<{ slug: string }>;
@@ -37,6 +37,7 @@ export async function generateMetadata({ params }: CatalogSectionPageProps): Pro
       title: `${section.title} | ${siteName}`,
       description: section.description,
       url: absoluteUrl(`/catalog/${section.slug}`),
+      locale: openGraphLocales[locale],
       images: section.catalogs[0] ? [{ url: absoluteUrl(section.catalogs[0].image), alt: section.catalogs[0].imageAlt }] : undefined,
     },
   };

@@ -9,7 +9,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/queries";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 import { applyDiscountCents, getCurrentUserBrandDiscounts } from "@/lib/pricing/discounts";
-import { absoluteUrl, siteName } from "@/lib/seo/site";
+import { absoluteUrl, openGraphLocales, siteName } from "@/lib/seo/site";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -137,6 +137,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       title: `${product.name} | ${siteName}`,
       description,
       url: absoluteUrl(`/product/${product.slug}`),
+      locale: openGraphLocales[locale],
       images: [{ url: absoluteUrl(image), alt: product.images[0]?.alt ?? product.name }],
     },
     twitter: {

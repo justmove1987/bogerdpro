@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: dictionary.checkout.quoteTitle,
     description: dictionary.checkout.quoteText,
+    robots: { index: false, follow: false },
   };
 }
 

@@ -6,6 +6,7 @@ import { getCurrentDictionary } from "@/lib/i18n/locale";
 
 export const metadata = {
   title: "Carrito",
+  robots: { index: false, follow: false },
 };
 
 export default async function CartPage() {

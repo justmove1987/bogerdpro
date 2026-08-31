@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { ProductBrowser } from "@/components/catalog/product-browser";
 import { Reveal } from "@/components/motion/reveal";
@@ -8,32 +9,97 @@ import { getSiteContent } from "@/config/site-content";
 import { getCatalogFiltersForSearch, getCatalogProducts, parseCatalogSearchParams } from "@/lib/catalog/queries";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 import { getCurrentUserBrandDiscounts } from "@/lib/pricing/discounts";
-import { absoluteUrl, defaultSeo, siteName } from "@/lib/seo/site";
+import { absoluteUrl, defaultSeo, openGraphLocales, seoDescriptions, siteName } from "@/lib/seo/site";
 
 type HomePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export const metadata: Metadata = {
-  title: "Vestuario laboral y EPI para empresas",
-  description: defaultSeo.description,
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: defaultSeo.title,
-    description: defaultSeo.description,
-    url: absoluteUrl("/"),
-    siteName,
-    images: [{ url: absoluteUrl(defaultSeo.image), alt: "BogerdPro vestuario laboral y EPI" }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getCurrentLocale();
+  const description = seoDescriptions[locale] ?? defaultSeo.description;
+
+  return {
+    title: "Vestuario laboral y EPI para empresas",
+    description,
+    alternates: { canonical: "/" },
+    openGraph: {
+      title: defaultSeo.title,
+      description,
+      url: absoluteUrl("/"),
+      siteName,
+      locale: openGraphLocales[locale],
+      images: [{ url: absoluteUrl(defaultSeo.image), alt: "BogerdPro vestuario laboral y EPI" }],
+    },
+  };
+}
+
+function ProductBrowserSkeleton() {
+  return (
+    <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
+      <div className="hidden rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-4 lg:block">
+        <div className="h-5 w-24 rounded bg-[#eee9df]" />
+        <div className="mt-5 grid gap-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="h-12 rounded-[var(--radius-sm)] bg-[#f7f5f0]" />
+          ))}
+        </div>
+      </div>
+      <section id="products" className="scroll-mt-24">
+        <div className="h-14 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white" />
+        <div className="mt-6 h-5 w-44 rounded bg-[#eee9df]" />
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="overflow-hidden rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white">
+              <div className="aspect-[4/5] bg-[#f7f5f0]" />
+              <div className="space-y-3 p-5">
+                <div className="h-4 w-28 rounded bg-[#eee9df]" />
+                <div className="h-6 w-4/5 rounded bg-[#eee9df]" />
+                <div className="h-4 w-3/5 rounded bg-[#eee9df]" />
+                <div className="h-8 w-24 rounded bg-[#eee9df]" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+async function HomeProductSection({
+  selected,
+  searchParams,
+  locale,
+  dictionary,
+}: {
+  selected: ReturnType<typeof parseCatalogSearchParams>;
+  searchParams: Record<string, string | string[] | undefined>;
+  locale: Awaited<ReturnType<typeof getCurrentLocale>>;
+  dictionary: Awaited<ReturnType<typeof getCurrentDictionary>>;
+}) {
+  const [filters, catalog, discounts] = await Promise.all([
+    getCatalogFiltersForSearch(selected, locale),
+    getCatalogProducts(selected, locale),
+    getCurrentUserBrandDiscounts(),
+  ]);
+
+  return (
+    <ProductBrowser
+      filters={filters}
+      catalog={catalog}
+      selected={selected}
+      searchParams={searchParams}
+      actionPath="/"
+      discounts={discounts}
+      labels={{ catalog: dictionary.catalog, search: dictionary.search }}
+    />
+  );
+}
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const homeSearchParams = await searchParams;
   const selected = parseCatalogSearchParams(homeSearchParams);
   const locale = await getCurrentLocale();
-  const filters = await getCatalogFiltersForSearch(selected, locale);
-  const catalog = await getCatalogProducts(selected, locale);
-  const discounts = await getCurrentUserBrandDiscounts();
   const dictionary = await getCurrentDictionary();
   const siteContent = getSiteContent(locale);
 
@@ -86,15 +152,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <section className="border-b border-[#e7e2d8] bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-          <ProductBrowser
-            filters={filters}
-            catalog={catalog}
-            selected={selected}
-            searchParams={homeSearchParams}
-            actionPath="/"
-            discounts={discounts}
-            labels={{ catalog: dictionary.catalog, search: dictionary.search }}
-          />
+          <Suspense fallback={<ProductBrowserSkeleton />}>
+            <HomeProductSection
+              selected={selected}
+              searchParams={homeSearchParams}
+              locale={locale}
+              dictionary={dictionary}
+            />
+          </Suspense>
         </div>
       </section>
 

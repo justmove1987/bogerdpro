@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { formatDisplayTitle } from "@/lib/catalog/format";
 import { applyDiscountCents, normalizeDiscountPercent } from "@/lib/pricing/discounts";
 
 export type CheckoutCartItem = {
@@ -77,7 +78,8 @@ export async function prepareCartOrder(items: CheckoutCartItem[], userId?: strin
     const variant = variantsById.get(item.variantId);
     if (!variant) throw new Error("Variant not found after validation.");
     const variantLabel = [variant.color, variant.size].filter(Boolean).join(" · ");
-    const name = variantLabel ? `${variant.product.name} (${variantLabel})` : variant.product.name;
+    const productName = formatDisplayTitle(variant.product.name) ?? variant.product.name;
+    const name = variantLabel ? `${productName} (${variantLabel})` : productName;
     const discountPercent = variant.product.brandId ? discountsByBrandId.get(variant.product.brandId) ?? null : null;
     const unitCents = applyDiscountCents(variant.priceCents, discountPercent);
 

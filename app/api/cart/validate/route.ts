@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth/options";
+import { formatDisplayTitle } from "@/lib/catalog/format";
 import { prisma } from "@/lib/db/prisma";
 import { applyDiscountCents, normalizeDiscountPercent } from "@/lib/pricing/discounts";
 
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
         originalPriceCents: discountPercent ? variant.priceCents : null,
         discountPercent,
         currency: variant.currency,
-        productName: variant.product.name,
+        productName: formatDisplayTitle(variant.product.name),
         productSlug: variant.product.slug,
       };
     }),

@@ -20,3 +20,13 @@ export function formatPriceRange(min?: number | null, max?: number | null, curre
 
   return formatPrice(min, currency);
 }
+
+export function formatDisplayTitle(value?: string | null) {
+  if (!value) return value;
+
+  return value
+    .toLocaleLowerCase("es-ES")
+    .replace(/(^|[\s./&()+-])([a-záéíóúàèòïüñç0-9])/gi, (match, separator: string, letter: string) => (
+      `${separator}${letter.toLocaleUpperCase("es-ES")}`
+    ));
+}

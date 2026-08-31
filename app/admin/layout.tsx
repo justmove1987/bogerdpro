@@ -1,6 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Building2, FolderTree, Package, ReceiptText, Upload, UsersRound } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/guards";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const adminNav = [
   { href: "/admin/products", label: "Productos", icon: Package },

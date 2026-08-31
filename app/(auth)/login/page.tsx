@@ -1,6 +1,11 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentDictionary } from "@/lib/i18n/locale";
 
+export const metadata = {
+  title: "Iniciar sesión",
+  robots: { index: false, follow: false },
+};
+
 type LoginPageProps = {
   searchParams?: Promise<{
     callbackUrl?: string;

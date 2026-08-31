@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Download, FileText, PackageCheck, Search } from "lucide-react";
 import type { OrderStatus, PaymentStatus } from "@/generated/prisma/enums";
+import { formatDisplayTitle } from "@/lib/catalog/format";
 import { formatOrderMoney } from "@/lib/orders/labels";
 
 type AccountOrder = {
@@ -159,10 +160,10 @@ export function AccountOrdersHistory({ orders, labels }: AccountOrdersHistoryPro
                               href={`/product/${item.productSlug}`}
                               className="font-medium text-[#151515] underline-offset-4 transition hover:text-[var(--accent)] hover:underline"
                             >
-                              {item.name}
+                              {formatDisplayTitle(item.name)}
                             </Link>
                           ) : (
-                            <span className="font-medium text-[#151515]">{item.name}</span>
+                            <span className="font-medium text-[#151515]">{formatDisplayTitle(item.name)}</span>
                           )}
                           <span>
                             {item.sku ?? "-"} · {labels.quantity}: {item.quantity}
