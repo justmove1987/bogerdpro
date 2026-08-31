@@ -107,6 +107,7 @@ export const dictionaries = {
       imagePending: "Imagen pendiente",
       professionalProduct: "Producto profesional",
       viewVariants: "Ver variantes",
+      loadingProducts: "Un segundo, por favor",
       prev: "Anterior",
       next: "Siguiente",
       colorGroups: {
@@ -531,6 +532,7 @@ export const dictionaries = {
       imagePending: "Imatge pendent",
       professionalProduct: "Producte professional",
       viewVariants: "Veure variants",
+      loadingProducts: "Un segon, si us plau",
       prev: "Anterior",
       next: "Següent",
       colorGroups: {
@@ -955,6 +957,7 @@ export const dictionaries = {
       imagePending: "Image pending",
       professionalProduct: "Professional product",
       viewVariants: "View variants",
+      loadingProducts: "One second, please",
       prev: "Previous",
       next: "Next",
       colorGroups: {
@@ -1379,6 +1382,7 @@ export const dictionaries = {
       imagePending: "Afbeelding volgt",
       professionalProduct: "Professioneel product",
       viewVariants: "Varianten bekijken",
+      loadingProducts: "Een ogenblik, alstublieft",
       prev: "Vorige",
       next: "Volgende",
       colorGroups: {
