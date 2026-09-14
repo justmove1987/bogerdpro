@@ -222,6 +222,7 @@ model Product {
   category        Category?               @relation(fields: [categoryId], references: [id])
   brand           Brand?                  @relation(fields: [brandId], references: [id])
   images          ProductImage[]
+  catalogGroups   ProductCatalogGroup[]
   documents       ProductDocument[]
   variants        ProductVariant[]
   attributeValues ProductAttributeValue[]
@@ -246,6 +247,19 @@ model Product {
   @@index([gender])
   @@index([material])
   @@index([name])
+}
+
+model ProductCatalogGroup {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  group     String
+  createdAt DateTime @default(now())
+
+  @@unique([productId, group])
+  @@index([group])
+  @@index([group, productId])
+  @@index([productId])
 }
 
 model ProductDocument {

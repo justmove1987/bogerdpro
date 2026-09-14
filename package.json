@@ -16,6 +16,7 @@
     "translations:import": "tsx scripts/import-catalog-translations.ts",
     "products:backfill-details": "tsx scripts/backfill-product-details.ts",
     "variants:backfill-filter-groups": "tsx scripts/backfill-variant-filter-groups.ts",
+    "catalog:backfill-groups": "tsx scripts/backfill-product-catalog-groups.ts",
     "check:env": "node scripts/check-production-env.mjs"
   },
   "keywords": [],

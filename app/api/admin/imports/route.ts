@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { ProductStatus } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/auth/guards";
 import { collectCsvValidationErrors, parseProductCsv, type ProductImportRow } from "@/lib/csv/products";
 import { prisma } from "@/lib/db/prisma";
 import { slugify } from "@/lib/admin/utils";
+import { inferProductCatalogGroups } from "@/lib/catalog/product-catalog-groups";
 
 type ImportReport = {
   created: number;
@@ -102,6 +103,34 @@ async function getOrCreateCategory(categoryName?: string, subcategoryName?: stri
       parentId: parent?.id ?? null,
     },
   });
+}
+
+async function syncProductCatalogGroups(productId: string) {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      category: { select: { name: true, slug: true } },
+      brand: { select: { name: true, slug: true } },
+    },
+  });
+
+  if (!product) return;
+
+  const groups = inferProductCatalogGroups(product);
+  await prisma.$transaction([
+    prisma.productCatalogGroup.deleteMany({ where: { productId } }),
+    ...(groups.length
+      ? [
+          prisma.productCatalogGroup.createMany({
+            data: groups.map((group) => ({ productId, group })),
+            skipDuplicates: true,
+          }),
+        ]
+      : []),
+  ]);
 }
 
 async function importProduct(row: ProductImportRow, rowNumber: number) {
@@ -203,6 +232,8 @@ async function importProduct(row: ProductImportRow, rowNumber: number) {
     });
   }
 
+  await syncProductCatalogGroups(product.id);
+
   return {
     row: rowNumber,
     sku: row.sku,
@@ -282,6 +313,7 @@ export async function POST(request: Request) {
       },
     });
 
+    revalidateTag("catalog", "max");
     revalidatePath("/");
     revalidatePath("/admin/products");
     revalidatePath("/admin/imports");

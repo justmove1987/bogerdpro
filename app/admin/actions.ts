@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth/guards";
 import { saveLocalUpload } from "@/lib/uploads/storage";
 import { centsToEuros, eurosToCents, formNumber, formString, slugify } from "@/lib/admin/utils";
+import { inferProductCatalogGroups } from "@/lib/catalog/product-catalog-groups";
 
 function revalidateCatalog() {
   revalidateTag("catalog", "max");
@@ -89,6 +90,61 @@ async function generateProductSku(name: string, currentProductId?: string) {
   return `BP-${Date.now()}`;
 }
 
+async function syncProductCatalogGroups(productId: string) {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      category: { select: { name: true, slug: true } },
+      brand: { select: { name: true, slug: true } },
+    },
+  });
+
+  if (!product) return;
+
+  const groups = inferProductCatalogGroups(product);
+  await prisma.$transaction([
+    prisma.productCatalogGroup.deleteMany({ where: { productId } }),
+    ...(groups.length
+      ? [
+          prisma.productCatalogGroup.createMany({
+            data: groups.map((group) => ({ productId, group })),
+            skipDuplicates: true,
+          }),
+        ]
+      : []),
+  ]);
+}
+
+async function syncAllProductCatalogGroups() {
+  const products = await prisma.product.findMany({
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      category: { select: { name: true, slug: true } },
+      brand: { select: { name: true, slug: true } },
+    },
+  });
+
+  for (const product of products) {
+    const groups = inferProductCatalogGroups(product);
+    await prisma.$transaction([
+      prisma.productCatalogGroup.deleteMany({ where: { productId: product.id } }),
+      ...(groups.length
+        ? [
+            prisma.productCatalogGroup.createMany({
+              data: groups.map((group) => ({ productId: product.id, group })),
+              skipDuplicates: true,
+            }),
+          ]
+        : []),
+    ]);
+  }
+}
+
 export async function saveProduct(formData: FormData) {
   await requireAdmin();
 
@@ -137,6 +193,8 @@ export async function saveProduct(formData: FormData) {
       },
     });
   }
+
+  await syncProductCatalogGroups(product.id);
 
   revalidateCatalog();
   revalidatePath("/admin/products");
@@ -259,6 +317,7 @@ export async function saveCategory(formData: FormData) {
     await prisma.category.create({ data: { name, slug, parentId, description } });
   }
 
+  await syncAllProductCatalogGroups();
   revalidateCatalog();
   revalidatePath("/admin/categories");
 }
@@ -266,6 +325,7 @@ export async function saveCategory(formData: FormData) {
 export async function deleteCategory(formData: FormData) {
   await requireAdmin();
   await prisma.category.delete({ where: { id: formString(formData, "id") } });
+  await syncAllProductCatalogGroups();
   revalidateCatalog();
   revalidatePath("/admin/categories");
 }
@@ -284,6 +344,7 @@ export async function saveBrand(formData: FormData) {
     await prisma.brand.create({ data: { name, slug } });
   }
 
+  await syncAllProductCatalogGroups();
   revalidateCatalog();
   revalidatePath("/admin/brands");
 }
@@ -291,6 +352,7 @@ export async function saveBrand(formData: FormData) {
 export async function deleteBrand(formData: FormData) {
   await requireAdmin();
   await prisma.brand.delete({ where: { id: formString(formData, "id") } });
+  await syncAllProductCatalogGroups();
   revalidateCatalog();
   revalidatePath("/admin/brands");
 }

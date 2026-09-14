@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
 import { defaultLocale, type Locale } from "@/config/i18n";
-import { catalogGroupKeys, catalogGroupTerms } from "@/lib/catalog/catalog-groups";
+import { catalogGroupKeys } from "@/lib/catalog/catalog-groups";
 import { colorGroupKeys, materialGroupKeys, normalizeMaterialGroup, sizeGroupKeys } from "@/lib/catalog/filter-groups";
 import { formatDisplayTitle } from "@/lib/catalog/format";
 import type { Prisma } from "@/generated/prisma/client";
@@ -132,19 +132,15 @@ function buildMaterialGroupWhere(groups?: string[]): Prisma.ProductWhereInput {
 }
 
 function buildCatalogGroupWhere(groups?: string[]): Prisma.ProductWhereInput {
-  const terms = groups?.flatMap((group) => catalogGroupTerms(group)) ?? [];
-  if (!terms.length) return {};
+  const validGroups = groups?.filter((group) => catalogGroupKeys.includes(group as (typeof catalogGroupKeys)[number])) ?? [];
+  if (!validGroups.length) return {};
 
   return {
-    OR: terms.map((term) => ({
-      OR: [
-        { name: { contains: term, mode: "insensitive" as const } },
-        { description: { contains: term, mode: "insensitive" as const } },
-        { category: { name: { contains: term, mode: "insensitive" as const } } },
-        { category: { slug: { contains: term.toLowerCase().replaceAll(" ", "-"), mode: "insensitive" as const } } },
-        { brand: { name: { contains: term, mode: "insensitive" as const } } },
-      ],
-    })),
+    catalogGroups: {
+      some: {
+        group: { in: validGroups },
+      },
+    },
   };
 }
 
@@ -347,7 +343,7 @@ async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, 
     genders,
     materialProducts,
     attributes,
-    catalogGroups,
+    catalogGroupCounts,
   ] = await Promise.all([
     prisma.category.findMany({
       orderBy: [{ parentId: "asc" }, { name: "asc" }],
@@ -410,26 +406,22 @@ async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, 
         },
       },
     }),
-    Promise.all(
-      catalogGroupKeys.map(async (key) => ({
-        slug: key,
-        count: await prisma.product.count({
-          where: buildProductWhere(
-            {
-              ...filters,
-              catalog: [key],
-              page: 1,
-              sort: "relevance",
-            },
-            locale,
-          ),
-        }),
-      })),
-    ),
+    prisma.productCatalogGroup.groupBy({
+      by: ["group"],
+      where: {
+        product: buildFacetWhere(filters, "catalog", locale),
+      },
+      _count: { _all: true },
+    }),
   ]);
 
   return {
-    catalogGroups: catalogGroups.filter((group) => group.count > 0),
+    catalogGroups: catalogGroupKeys
+      .map((key) => ({
+        slug: key,
+        count: catalogGroupCounts.find((item) => item.group === key)?._count._all ?? 0,
+      }))
+      .filter((group) => group.count > 0),
     categories: categories.filter((category) => category._count.products > 0).map(localizeCategory),
     brands: brands.filter((brand) => brand._count.products > 0).map(localizeBrand),
     colors: colorGroupKeys.filter((key) => colors.some((item) => item.colorGroup === key)),
