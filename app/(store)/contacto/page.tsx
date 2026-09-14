@@ -48,7 +48,7 @@ function contactCards(labels: ContactLabels) {
     title: labels.office,
     text: labels.officeText,
     value: contactInfo.office,
-    href: "https://maps.google.com/?q=Av.%20Montgo%2068%20B%2C%2017130%20L%27Escala%2C%20Girona%2C%20Espana",
+    href: contactInfo.mapsUrl,
     icon: MapPin,
   },
   ];

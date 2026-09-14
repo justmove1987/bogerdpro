@@ -15,7 +15,7 @@ export function Footer({
 }: {
   labels: Dictionary["footer"];
   collections: FooterCollection[];
-  contactInfo: { phone: string; email: string; office: string };
+  contactInfo: { phone: string; email: string; office: string; mapsUrl: string };
 }) {
   return (
     <footer className="border-t border-[#dbe3ec] bg-[#101820] text-white">
@@ -38,9 +38,9 @@ export function Footer({
             <a href={`mailto:${contactInfo.email}`} className="flex items-center gap-3 transition hover:text-white">
               <Mail size={16} /> {contactInfo.email}
             </a>
-            <p className="flex items-start gap-3">
+            <a href={contactInfo.mapsUrl} target="_blank" rel="noreferrer" className="flex items-start gap-3 transition hover:text-white">
               <MapPin className="mt-0.5 shrink-0" size={16} /> {contactInfo.office}
-            </p>
+            </a>
           </div>
         </div>
         <div>

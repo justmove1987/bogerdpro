@@ -87,7 +87,7 @@ export function ProductCard({ product, labels, discounts = {} }: { product: Cata
           <p className="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-[#62615d]">{product.description}</p>
           <div className="mt-auto flex items-end justify-between gap-4 pt-5">
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#8a8174]">PVR</p>
+              <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#8a8174]">{labels.professionalPrice}</p>
               {discountPercent ? (
                 <div className="mt-1">
                   <p className="text-xs font-medium text-[#8a8174] line-through">

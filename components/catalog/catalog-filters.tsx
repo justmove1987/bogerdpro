@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import type { CatalogSearchParams } from "@/lib/catalog/queries";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
-type CatalogFiltersData = {
+export type CatalogFiltersData = {
   catalogGroups: {
     slug: string;
     count: number;
@@ -124,11 +124,13 @@ export function CatalogFilters({
   selected,
   actionPath = "/catalog",
   labels,
+  onPendingChange,
 }: {
   filters: CatalogFiltersData;
   selected: CatalogSearchParams;
   actionPath?: string;
   labels: Dictionary["catalog"];
+  onPendingChange?: (pending: boolean) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
@@ -144,6 +146,10 @@ export function CatalogFilters({
     selectedCount(selected.material) +
     selectedCount(selected.attribute) +
     priceCount;
+
+  useEffect(() => {
+    onPendingChange?.(isPending);
+  }, [isPending, onPendingChange]);
 
   function applyFilters() {
     if (!formRef.current) return;
@@ -182,7 +188,7 @@ export function CatalogFilters({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2">
+        <fieldset disabled={isPending} className="mt-4 grid gap-2 disabled:cursor-wait disabled:opacity-70">
           <FilterGroup title={labels.catalogDivision} count={selectedCount(selected.catalog)}>
             {filters.catalogGroups.map((group) => (
               <CheckboxFilter
@@ -288,7 +294,7 @@ export function CatalogFilters({
               ))}
             </FilterGroup>
           ))}
-        </div>
+        </fieldset>
 
         <div className="mt-5">
           <Link

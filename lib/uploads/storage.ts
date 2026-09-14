@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { put } from "@vercel/blob";
 
 const uploadDir = path.join(process.cwd(), "public", "uploads");
 const allowedImageTypes = new Map([
@@ -23,6 +24,20 @@ export function validateImageUpload(file: File) {
 
 export async function saveLocalUpload(file: File) {
   validateImageUpload(file);
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const extension = allowedImageTypes.get(file.type) ?? path.extname(file.name).toLowerCase();
+    const safeName = path
+      .basename(file.name, path.extname(file.name))
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    const filename = `product-images/${safeName || "producte"}-${randomUUID()}${extension}`;
+    const blob = await put(filename, file, { access: "public" });
+
+    return blob.url;
+  }
+
   await mkdir(uploadDir, { recursive: true });
 
   const extension = allowedImageTypes.get(file.type) ?? path.extname(file.name).toLowerCase();

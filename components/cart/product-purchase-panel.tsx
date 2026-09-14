@@ -103,8 +103,9 @@ export function ProductPurchasePanel({ product, variants, labels }: ProductPurch
                   {formatPriceRange(selectedVariant.originalPriceCents, selectedVariant.originalPriceCents, selectedVariant.currency)}
                 </p>
               ) : null}
-              <p className="text-3xl font-bold tracking-tight">
-                {formatPriceRange(selectedVariant.priceCents, selectedVariant.priceCents, selectedVariant.currency)}
+              <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-3xl font-bold tracking-tight">
+                <span>{formatPriceRange(selectedVariant.priceCents, selectedVariant.priceCents, selectedVariant.currency)}</span>
+                <span className="text-sm font-medium text-[#62615d]">{labels.vatExcluded}</span>
               </p>
               {selectedVariant.discountPercent ? (
                 <p className="mt-2 w-fit rounded-full bg-[#eef5ff] px-2 py-1 text-xs font-semibold text-[var(--accent)]">

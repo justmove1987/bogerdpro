@@ -1,4 +1,5 @@
-import { deleteProductImage, deleteVariant, saveProduct, saveProductImage, saveVariant } from "@/app/admin/actions";
+import { deleteProductImage, deleteVariant, saveProduct, saveVariant } from "@/app/admin/actions";
+import { ProductImageForm } from "@/components/admin/product-image-form";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { centsToEuros } from "@/lib/admin/utils";
 
@@ -11,6 +12,8 @@ type ProductFormProduct = {
   slug: string;
   sku: string | null;
   description: string | null;
+  gender: string | null;
+  material: string | null;
   categoryId: string | null;
   brandId: string | null;
   isActive: boolean;
@@ -62,7 +65,13 @@ export function ProductForm({
             <input className={inputClass} name="slug" defaultValue={product?.slug ?? ""} placeholder="se-genera-si-se-deja-vacio" />
           </Field>
           <Field label="SKU principal">
-            <input className={inputClass} name="sku" defaultValue={product?.sku ?? ""} />
+            <input className={inputClass} name="sku" defaultValue={product?.sku ?? ""} placeholder="Se genera si se deja vacío" />
+          </Field>
+          <Field label="Género">
+            <input className={inputClass} name="gender" defaultValue={product?.gender ?? ""} placeholder="Unisex, Hombre, Mujer..." />
+          </Field>
+          <Field label="Material">
+            <input className={inputClass} name="material" defaultValue={product?.material ?? ""} placeholder="Algodón, poliéster, piel..." />
           </Field>
           <Field label="Categoría">
             <select className={inputClass} name="categoryId" defaultValue={product?.categoryId ?? ""}>
@@ -94,6 +103,19 @@ export function ProductForm({
         <Field label="Descripción">
           <textarea className="premium-focus min-h-32 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-3 py-3 text-sm" name="description" defaultValue={product?.description ?? ""} />
         </Field>
+        {isNew ? (
+          <div className="mt-5 grid gap-4 rounded-[var(--radius-sm)] bg-[#f7f5f0] p-4 md:grid-cols-3">
+            <Field label="Imagen inicial desde archivo">
+              <input className={inputClass} name="initialImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif" />
+            </Field>
+            <Field label="O URL de imagen inicial">
+              <input className={inputClass} name="initialImageUrl" placeholder="https://... o /images/..." />
+            </Field>
+            <Field label="Alt imagen inicial">
+              <input className={inputClass} name="initialImageAlt" placeholder="Descripción breve" />
+            </Field>
+          </div>
+        ) : null}
         <button className="mt-5 inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[#151515] px-5 text-sm font-semibold text-white" type="submit">
           {isNew ? "Crear producto" : "Guardar cambios"}
         </button>
@@ -120,22 +142,7 @@ export function ProductForm({
                 </div>
               ))}
             </div>
-            <form action={saveProductImage} className="mt-5 grid gap-3 rounded-[var(--radius-sm)] bg-[#f7f5f0] p-4 md:grid-cols-[1fr_1fr_100px_auto] md:items-end">
-              <input type="hidden" name="productId" value={product.id} />
-              <Field label="Subir archivo">
-                <input className={inputClass} name="file" type="file" accept="image/*" />
-              </Field>
-              <Field label="O URL de imagen">
-                <input className={inputClass} name="url" placeholder="/images/..." />
-              </Field>
-              <Field label="Orden">
-                <input className={inputClass} name="position" type="number" defaultValue="0" />
-              </Field>
-              <Field label="Alt">
-                <input className={inputClass} name="alt" placeholder="Descripción breve" />
-              </Field>
-              <button className="h-11 rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white md:col-span-4" type="submit">Añadir imagen</button>
-            </form>
+            <ProductImageForm productId={product.id} />
           </section>
 
           <section className="rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">

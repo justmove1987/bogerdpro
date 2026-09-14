@@ -28,13 +28,70 @@ async function updateProductPriceRange(productId: string) {
   });
 }
 
+async function imageUrlFromForm(formData: FormData, urlField = "url", fileField = "file") {
+  const urlFromInput = formString(formData, urlField);
+  const file = formData.get(fileField);
+
+  if (file instanceof File && file.size > 0) {
+    return saveLocalUpload(file);
+  }
+
+  return urlFromInput;
+}
+
+async function createProductImage(formData: FormData) {
+  const productId = formString(formData, "productId");
+  const alt = formString(formData, "alt") || null;
+  const position = formNumber(formData, "position") ?? 0;
+  const url = await imageUrlFromForm(formData);
+
+  if (!productId) {
+    throw new Error("El producto es obligatorio.");
+  }
+
+  if (!url) {
+    throw new Error("Añade una imagen por archivo o por URL.");
+  }
+
+  await prisma.productImage.create({
+    data: { productId, url, alt, position },
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/admin/products/${productId}`);
+}
+
+async function generateProductSku(name: string, currentProductId?: string) {
+  const normalizedName = slugify(name).replaceAll("-", "").toUpperCase();
+  const base = `BP-${(normalizedName || "PRODUCTO").slice(0, 12)}`;
+
+  for (let index = 0; index < 1000; index += 1) {
+    const candidate = index === 0 ? base : `${base}-${index + 1}`;
+    const existing = await prisma.product.findFirst({
+      where: {
+        sku: candidate,
+        ...(currentProductId ? { id: { not: currentProductId } } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return candidate;
+    }
+  }
+
+  return `BP-${Date.now()}`;
+}
+
 export async function saveProduct(formData: FormData) {
   await requireAdmin();
 
   const id = formString(formData, "id");
   const name = formString(formData, "name");
-  const sku = formString(formData, "sku") || null;
+  const sku = formString(formData, "sku") || await generateProductSku(name, id || undefined);
   const description = formString(formData, "description") || null;
+  const gender = formString(formData, "gender") || null;
+  const material = formString(formData, "material") || null;
   const categoryId = formString(formData, "categoryId") || null;
   const brandId = formString(formData, "brandId") || null;
   const isActive = formData.get("isActive") === "on";
@@ -50,6 +107,8 @@ export async function saveProduct(formData: FormData) {
     slug,
     sku,
     description,
+    gender,
+    material,
     categoryId,
     brandId,
     isActive,
@@ -60,6 +119,18 @@ export async function saveProduct(formData: FormData) {
   const product = id
     ? await prisma.product.update({ where: { id }, data })
     : await prisma.product.create({ data });
+
+  const initialImageUrl = await imageUrlFromForm(formData, "initialImageUrl", "initialImageFile");
+  if (initialImageUrl) {
+    await prisma.productImage.create({
+      data: {
+        productId: product.id,
+        url: initialImageUrl,
+        alt: formString(formData, "initialImageAlt") || product.name,
+        position: 0,
+      },
+    });
+  }
 
   revalidatePath("/");
   revalidatePath("/admin/products");
@@ -135,26 +206,26 @@ export async function deleteVariant(formData: FormData) {
 
 export async function saveProductImage(formData: FormData) {
   await requireAdmin();
-  const productId = formString(formData, "productId");
-  const alt = formString(formData, "alt") || null;
-  const position = formNumber(formData, "position") ?? 0;
-  const urlFromInput = formString(formData, "url");
-  const file = formData.get("file");
+  await createProductImage(formData);
+}
 
-  let url = urlFromInput;
-  if (file instanceof File && file.size > 0) {
-    url = await saveLocalUpload(file);
+export type ProductImageFormState = {
+  ok: boolean;
+  message: string;
+};
+
+export async function saveProductImageState(_state: ProductImageFormState, formData: FormData): Promise<ProductImageFormState> {
+  await requireAdmin();
+
+  try {
+    await createProductImage(formData);
+    return { ok: true, message: "Imagen añadida correctamente." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "No se ha podido añadir la imagen.",
+    };
   }
-
-  if (!productId || !url) {
-    throw new Error("La imagen es obligatoria.");
-  }
-
-  await prisma.productImage.create({
-    data: { productId, url, alt, position },
-  });
-  revalidatePath("/");
-  revalidatePath(`/admin/products/${productId}`);
 }
 
 export async function deleteProductImage(formData: FormData) {

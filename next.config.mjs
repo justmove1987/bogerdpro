@@ -28,6 +28,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "assets.ppe-analytics.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+      },
     ],
   },
 };

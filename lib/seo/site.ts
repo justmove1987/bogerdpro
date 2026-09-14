@@ -51,7 +51,7 @@ export function organizationJsonLd() {
     name: siteName,
     url: getSiteUrl(),
     logo: absoluteUrl("/brand/logo-bogerdpro.png"),
-    email: "rbogerd@bogerdpro.com",
+    email: "info@bogerdpro.com",
     telephone: "+34621228709",
     address: {
       "@type": "PostalAddress",

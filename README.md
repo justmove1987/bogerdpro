@@ -59,8 +59,8 @@ Variables recomendadas:
 
 ```env
 RESEND_API_KEY=""
-EMAIL_FROM="BogerdPro <rbogerd@bogerdpro.com>"
-ORDER_NOTIFICATION_EMAIL="rbogerd@bogerdpro.com"
+EMAIL_FROM="BogerdPro <info@bogerdpro.com>"
+ORDER_NOTIFICATION_EMAIL="info@bogerdpro.com"
 ADMIN_EMAIL=""
 ADMIN_PASSWORD=""
 ```
@@ -250,8 +250,8 @@ Para producción:
 
 ```env
 RESEND_API_KEY=""
-EMAIL_FROM="BogerdPro <rbogerd@bogerdpro.com>"
-ORDER_NOTIFICATION_EMAIL="rbogerd@bogerdpro.com"
+EMAIL_FROM="BogerdPro <info@bogerdpro.com>"
+ORDER_NOTIFICATION_EMAIL="info@bogerdpro.com"
 ```
 
 ## SEO

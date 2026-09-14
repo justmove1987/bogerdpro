@@ -144,8 +144,10 @@ export const companyStats = [
 
 export const contactInfo = {
   phone: "(+34) 621 22 87 09",
-  email: "rbogerd@bogerdpro.com",
+  email: "info@bogerdpro.com",
   office: "Av. Montgó 68 B, 17130 L'Escala, Girona, España",
+  mapsUrl:
+    "https://www.google.com/maps/place/Bogerd+Pro/@42.1132915,3.144677,20z/data=!4m6!3m5!1s0x12ba590e6963d6d3:0xe72ff40a3d2b9ec2!8m2!3d42.1132915!4d3.1448684!16s%2Fg%2F11vyttqqxc?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D",
 };
 
 const siteContentTranslations: Record<Locale, {
