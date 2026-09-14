@@ -1,11 +1,17 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth/guards";
 import { saveLocalUpload } from "@/lib/uploads/storage";
 import { centsToEuros, eurosToCents, formNumber, formString, slugify } from "@/lib/admin/utils";
+
+function revalidateCatalog() {
+  revalidateTag("catalog", "max");
+  revalidatePath("/");
+  revalidatePath("/catalog");
+}
 
 async function updateProductPriceRange(productId: string) {
   const variants = await prisma.productVariant.findMany({
@@ -57,7 +63,7 @@ async function createProductImage(formData: FormData) {
     data: { productId, url, alt, position },
   });
 
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath(`/admin/products/${productId}`);
 }
 
@@ -132,7 +138,7 @@ export async function saveProduct(formData: FormData) {
     });
   }
 
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath("/admin/products");
   revalidatePath(`/product/${product.slug}`);
   redirect(`/admin/products/${product.id}`);
@@ -149,7 +155,7 @@ export async function toggleProductActive(formData: FormData) {
       status: product.isActive ? "INACTIVE" : "ACTIVE",
     },
   });
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath("/admin/products");
 }
 
@@ -157,7 +163,7 @@ export async function deleteProduct(formData: FormData) {
   await requireAdmin();
   const id = formString(formData, "id");
   await prisma.product.delete({ where: { id } });
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath("/admin/products");
 }
 
@@ -190,7 +196,7 @@ export async function saveVariant(formData: FormData) {
   }
 
   await updateProductPriceRange(productId);
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath(`/admin/products/${productId}`);
 }
 
@@ -200,7 +206,7 @@ export async function deleteVariant(formData: FormData) {
   const productId = formString(formData, "productId");
   await prisma.productVariant.delete({ where: { id } });
   await updateProductPriceRange(productId);
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath(`/admin/products/${productId}`);
 }
 
@@ -233,7 +239,7 @@ export async function deleteProductImage(formData: FormData) {
   const id = formString(formData, "id");
   const productId = formString(formData, "productId");
   await prisma.productImage.delete({ where: { id } });
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath(`/admin/products/${productId}`);
 }
 
@@ -253,14 +259,14 @@ export async function saveCategory(formData: FormData) {
     await prisma.category.create({ data: { name, slug, parentId, description } });
   }
 
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath("/admin/categories");
 }
 
 export async function deleteCategory(formData: FormData) {
   await requireAdmin();
   await prisma.category.delete({ where: { id: formString(formData, "id") } });
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath("/admin/categories");
 }
 
@@ -278,14 +284,14 @@ export async function saveBrand(formData: FormData) {
     await prisma.brand.create({ data: { name, slug } });
   }
 
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath("/admin/brands");
 }
 
 export async function deleteBrand(formData: FormData) {
   await requireAdmin();
   await prisma.brand.delete({ where: { id: formString(formData, "id") } });
-  revalidatePath("/");
+  revalidateCatalog();
   revalidatePath("/admin/brands");
 }
 
@@ -367,7 +373,7 @@ export async function saveUserBrandDiscount(formData: FormData) {
   });
 
   revalidatePath("/admin/users");
-  revalidatePath("/");
+  revalidateCatalog();
 }
 
 export async function deleteUserBrandDiscount(formData: FormData) {
@@ -375,7 +381,7 @@ export async function deleteUserBrandDiscount(formData: FormData) {
   const id = formString(formData, "id");
   await prisma.userBrandDiscount.delete({ where: { id } });
   revalidatePath("/admin/users");
-  revalidatePath("/");
+  revalidateCatalog();
 }
 
 export async function updateOrderStatus(formData: FormData) {

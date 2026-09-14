@@ -234,8 +234,13 @@ model Product {
 
   @@index([status])
   @@index([isActive])
+  @@index([isActive, status])
+  @@index([isActive, status, isFeatured, createdAt])
   @@index([isFeatured])
   @@index([minPriceCents])
+  @@index([maxPriceCents])
+  @@index([isActive, status, minPriceCents])
+  @@index([isActive, status, maxPriceCents])
   @@index([categoryId])
   @@index([brandId])
   @@index([gender])
@@ -297,12 +302,16 @@ model ProductVariant {
   updatedAt       DateTime                @updatedAt
 
   @@index([productId])
+  @@index([productId, isActive, priceCents])
   @@index([color])
   @@index([colorGroup])
+  @@index([isActive, colorGroup])
   @@index([size])
   @@index([sizeGroup])
+  @@index([isActive, sizeGroup])
   @@index([isActive])
   @@index([priceCents])
+  @@index([isActive, priceCents])
 }
 
 model ProductImage {
@@ -315,6 +324,7 @@ model ProductImage {
   createdAt DateTime @default(now())
 
   @@index([productId, position])
+  @@index([productId, url])
 }
 
 model Attribute {

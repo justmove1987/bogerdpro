@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { unstable_cache } from "next/cache";
 import { defaultLocale, type Locale } from "@/config/i18n";
 import { catalogGroupKeys, catalogGroupTerms } from "@/lib/catalog/catalog-groups";
 import { colorGroupKeys, materialGroupKeys, normalizeMaterialGroup, sizeGroupKeys } from "@/lib/catalog/filter-groups";
@@ -6,6 +7,7 @@ import { formatDisplayTitle } from "@/lib/catalog/format";
 import type { Prisma } from "@/generated/prisma/client";
 
 export const PRODUCTS_PER_PAGE = 12;
+const CATALOG_CACHE_SECONDS = 300;
 const pendingImagePath = "/images/products/product-image-pending.svg";
 const visibleProductImageWhere = {
   images: {
@@ -254,7 +256,7 @@ function productOrderBy(sort: CatalogSearchParams["sort"]) {
   return [{ isFeatured: "desc" as const }, { createdAt: "desc" as const }];
 }
 
-export async function getCatalogProducts(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
+async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
   const where = buildProductWhere(filters, locale);
   const skip = (filters.page - 1) * PRODUCTS_PER_PAGE;
 
@@ -312,14 +314,23 @@ export async function getCatalogProducts(filters: CatalogSearchParams, locale: L
   };
 }
 
-export async function getCatalogFilters() {
+const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v1"], {
+  revalidate: CATALOG_CACHE_SECONDS,
+  tags: ["catalog"],
+});
+
+export async function getCatalogProducts(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
+  return getCatalogProductsCached(filters, locale);
+}
+
+export async function getCatalogFilters(locale: Locale = defaultLocale) {
   return getCatalogFiltersForSearch({
     page: 1,
     sort: "relevance",
-  });
+  }, locale);
 }
 
-export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
+async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
   const categoryFacetWhere = buildFacetWhere(filters, "category", locale);
   const brandFacetWhere = buildFacetWhere(filters, "brand", locale);
   const colorFacetWhere = buildFacetWhere(filters, "color", locale);
@@ -432,6 +443,15 @@ export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, l
       .filter((item) => item.count > 0),
     attributes: attributes.filter((attribute) => attribute.values.length > 0),
   };
+}
+
+const getCatalogFiltersForSearchCached = unstable_cache(getCatalogFiltersForSearchUncached, ["catalog-filters-v1"], {
+  revalidate: CATALOG_CACHE_SECONDS,
+  tags: ["catalog"],
+});
+
+export async function getCatalogFiltersForSearch(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
+  return getCatalogFiltersForSearchCached(filters, locale);
 }
 
 export async function getFeaturedProducts(take = 3, locale: Locale = defaultLocale) {

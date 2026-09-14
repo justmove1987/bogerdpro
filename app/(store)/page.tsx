@@ -6,7 +6,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { ProductBrowser } from "@/components/catalog/product-browser";
 import { Reveal } from "@/components/motion/reveal";
 import { getSiteContent } from "@/config/site-content";
-import { getCatalogFiltersForSearch, getCatalogProducts, parseCatalogSearchParams } from "@/lib/catalog/queries";
+import { getCatalogFilters, getCatalogProducts, parseCatalogSearchParams } from "@/lib/catalog/queries";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 import { getCurrentUserBrandDiscounts } from "@/lib/pricing/discounts";
 import { absoluteUrl, defaultSeo, openGraphLocales, seoDescriptions, siteName } from "@/lib/seo/site";
@@ -60,7 +60,7 @@ async function HomeProductSection({
   dictionary: Awaited<ReturnType<typeof getCurrentDictionary>>;
 }) {
   const [filters, catalog, discounts] = await Promise.all([
-    getCatalogFiltersForSearch(selected, locale),
+    getCatalogFilters(locale),
     getCatalogProducts(selected, locale),
     getCurrentUserBrandDiscounts(),
   ]);
