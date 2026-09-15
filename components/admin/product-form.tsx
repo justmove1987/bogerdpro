@@ -1,4 +1,4 @@
-import { deleteProductImage, deleteVariant, saveProduct, saveVariant } from "@/app/admin/actions";
+import { deleteProductImage, deleteVariant, saveProduct, saveVariant, updateProductImage } from "@/app/admin/actions";
 import { ProductImageForm } from "@/components/admin/product-image-form";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { centsToEuros } from "@/lib/admin/utils";
@@ -125,22 +125,41 @@ export function ProductForm({
         <>
           <section className="rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
             <h2 className="text-xl font-semibold">Imágenes</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {product.images.map((image) => (
-                <div key={image.id} className="overflow-hidden rounded-[var(--radius-sm)] border border-[#e7e2d8]">
-                  <div className="relative aspect-[4/3] bg-[#f7f5f0]">
-                    <ImageWithFallback src={image.url} fallbackSrc="/images/products/product-image-pending.svg" alt={image.alt ?? product.name} fill sizes="260px" className="object-cover" />
-                  </div>
-                  <div className="flex items-center justify-between gap-3 p-3 text-sm">
-                    <span className="truncate text-[#62615d]">{image.alt || image.url}</span>
-                    <form action={deleteProductImage}>
+            <div className="mt-4 rounded-[var(--radius-sm)] border border-[#e7e2d8] bg-[#f7f5f0] p-4">
+              <h3 className="text-sm font-semibold text-[#151515]">Imágenes cargadas</h3>
+              {product.images.length ? (
+                <div className="mt-3 grid gap-3">
+                  {product.images.map((image) => (
+                    <form key={image.id} action={updateProductImage} className="grid gap-3 rounded-[var(--radius-sm)] border border-[#e7e2d8] bg-white p-3 lg:grid-cols-[120px_1fr_90px_1fr_auto] lg:items-end">
                       <input type="hidden" name="id" value={image.id} />
                       <input type="hidden" name="productId" value={product.id} />
-                      <button className="font-semibold text-red-600" type="submit">Eliminar</button>
+                      <div>
+                        <p className="mb-2 text-xs font-semibold text-[#62615d]">Vista previa</p>
+                        <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-sm)] bg-[#f7f5f0]">
+                          <ImageWithFallback src={image.url} fallbackSrc="/images/products/product-image-pending.svg" alt={image.alt ?? product.name} fill sizes="120px" className="object-cover" />
+                        </div>
+                      </div>
+                      <Field label="URL">
+                        <input className={inputClass} name="url" defaultValue={image.url} required />
+                      </Field>
+                      <Field label="Orden">
+                        <input className={inputClass} name="position" type="number" defaultValue={image.position} />
+                      </Field>
+                      <Field label="Alt">
+                        <input className={inputClass} name="alt" defaultValue={image.alt ?? ""} placeholder="Descripción breve" />
+                      </Field>
+                      <div className="flex gap-2">
+                        <button className="h-10 rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white" type="submit">Guardar</button>
+                        <button formAction={deleteProductImage} className="h-10 rounded-[var(--radius-sm)] border border-red-200 px-4 text-sm font-semibold text-red-600" type="submit">Eliminar</button>
+                      </div>
                     </form>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <p className="mt-3 rounded-[var(--radius-sm)] bg-white px-3 py-2 text-sm text-[#62615d]">
+                  Este producto todavía no tiene imágenes cargadas.
+                </p>
+              )}
             </div>
             <ProductImageForm productId={product.id} />
           </section>

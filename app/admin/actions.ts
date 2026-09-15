@@ -273,6 +273,27 @@ export async function saveProductImage(formData: FormData) {
   await createProductImage(formData);
 }
 
+export async function updateProductImage(formData: FormData) {
+  await requireAdmin();
+  const id = formString(formData, "id");
+  const productId = formString(formData, "productId");
+  const url = formString(formData, "url");
+  const alt = formString(formData, "alt") || null;
+  const position = formNumber(formData, "position") ?? 0;
+
+  if (!id || !productId || !url) {
+    throw new Error("Imagen, producto y URL son obligatorios.");
+  }
+
+  await prisma.productImage.update({
+    where: { id },
+    data: { url, alt, position },
+  });
+
+  revalidateCatalog();
+  revalidatePath(`/admin/products/${productId}`);
+}
+
 export type ProductImageFormState = {
   ok: boolean;
   message: string;
