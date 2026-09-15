@@ -11,6 +11,7 @@ const allowedImageTypes = new Map([
   ["image/avif", ".avif"],
 ]);
 const maxImageSizeBytes = 5 * 1024 * 1024;
+const isVercelProduction = Boolean(process.env.VERCEL);
 
 export function validateImageUpload(file: File) {
   if (!allowedImageTypes.has(file.type)) {
@@ -25,8 +26,9 @@ export function validateImageUpload(file: File) {
 export async function saveLocalUpload(file: File) {
   validateImageUpload(file);
 
+  const extension = allowedImageTypes.get(file.type) ?? path.extname(file.name).toLowerCase();
+
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const extension = allowedImageTypes.get(file.type) ?? path.extname(file.name).toLowerCase();
     const safeName = path
       .basename(file.name, path.extname(file.name))
       .toLowerCase()
@@ -38,9 +40,12 @@ export async function saveLocalUpload(file: File) {
     return blob.url;
   }
 
+  if (isVercelProduction) {
+    throw new Error("Para subir archivos en producción falta configurar Vercel Blob. Añade BLOB_READ_WRITE_TOKEN en Vercel o usa una URL de imagen.");
+  }
+
   await mkdir(uploadDir, { recursive: true });
 
-  const extension = allowedImageTypes.get(file.type) ?? path.extname(file.name).toLowerCase();
   const filename = `${randomUUID()}${extension}`;
   const fullPath = path.join(uploadDir, filename);
   const buffer = Buffer.from(await file.arrayBuffer());
