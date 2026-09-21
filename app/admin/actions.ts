@@ -225,9 +225,7 @@ export async function deleteProduct(formData: FormData) {
   revalidatePath("/admin/products");
 }
 
-export async function saveVariant(formData: FormData) {
-  await requireAdmin();
-
+async function upsertVariant(formData: FormData) {
   const id = formString(formData, "id");
   const productId = formString(formData, "productId");
   const sku = formString(formData, "sku");
@@ -240,6 +238,18 @@ export async function saveVariant(formData: FormData) {
 
   if (!productId || !sku || typeof priceCents !== "number") {
     throw new Error("SKU, producto y precio son obligatorios.");
+  }
+
+  const duplicatedVariant = await prisma.productVariant.findFirst({
+    where: {
+      sku,
+      ...(id ? { id: { not: id } } : {}),
+    },
+    select: { id: true },
+  });
+
+  if (duplicatedVariant) {
+    throw new Error("Ya existe una variante con este SKU. Usa un SKU único.");
   }
 
   if (id) {
@@ -256,6 +266,30 @@ export async function saveVariant(formData: FormData) {
   await updateProductPriceRange(productId);
   revalidateCatalog();
   revalidatePath(`/admin/products/${productId}`);
+}
+
+export async function saveVariant(formData: FormData) {
+  await requireAdmin();
+  await upsertVariant(formData);
+}
+
+export type ProductVariantFormState = {
+  ok: boolean;
+  message: string;
+};
+
+export async function saveVariantState(_state: ProductVariantFormState, formData: FormData): Promise<ProductVariantFormState> {
+  await requireAdmin();
+
+  try {
+    await upsertVariant(formData);
+    return { ok: true, message: "Variante guardada correctamente." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "No se ha podido guardar la variante.",
+    };
+  }
 }
 
 export async function deleteVariant(formData: FormData) {

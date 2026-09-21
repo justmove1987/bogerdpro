@@ -13,7 +13,7 @@ export function formString(formData: FormData, key: string) {
 }
 
 export function formNumber(formData: FormData, key: string) {
-  const value = formString(formData, key);
+  const value = formString(formData, key).replace(",", ".");
   if (!value) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;

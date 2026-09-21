@@ -1,7 +1,7 @@
-import { deleteProductImage, deleteVariant, saveProduct, saveVariant, updateProductImage } from "@/app/admin/actions";
+import { deleteProductImage, saveProduct, updateProductImage } from "@/app/admin/actions";
 import { ProductImageForm } from "@/components/admin/product-image-form";
+import { VariantForm } from "@/components/admin/variant-form";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
-import { centsToEuros } from "@/lib/admin/utils";
 
 type CategoryOption = { id: string; name: string };
 type BrandOption = { id: string; name: string };
@@ -168,40 +168,10 @@ export function ProductForm({
             <h2 className="text-xl font-semibold">Variantes, precios y disponibilidad</h2>
             <div className="mt-4 grid gap-3">
               {product.variants.map((variant) => (
-                <form key={variant.id} action={saveVariant} className="grid gap-3 rounded-[var(--radius-sm)] border border-[#e7e2d8] p-3 md:grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.8fr_0.7fr_auto] md:items-end">
-                  <input type="hidden" name="id" value={variant.id} />
-                  <input type="hidden" name="productId" value={product.id} />
-                  <Field label="SKU"><input className={inputClass} name="sku" defaultValue={variant.sku} required /></Field>
-                  <Field label="Nombre"><input className={inputClass} name="name" defaultValue={variant.name} /></Field>
-                  <Field label="Color"><input className={inputClass} name="color" defaultValue={variant.color ?? ""} /></Field>
-                  <Field label="Talla"><input className={inputClass} name="size" defaultValue={variant.size ?? ""} /></Field>
-                  <Field label="Precio €"><input className={inputClass} name="price" type="number" step="0.01" defaultValue={centsToEuros(variant.priceCents)} required /></Field>
-              <input type="hidden" name="stock" value={variant.stock} />
-              <label className="flex items-center gap-2 pb-3 text-sm font-medium">
-                <input name="isActive" type="checkbox" defaultChecked={variant.isActive} className="h-4 w-4 accent-[var(--accent)]" />
-                Variante disponible
-                  </label>
-                  <div className="flex gap-2 md:col-span-7">
-                    <button className="h-10 rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white" type="submit">Guardar variante</button>
-                    <button formAction={deleteVariant} className="h-10 rounded-[var(--radius-sm)] border border-red-200 px-4 text-sm font-semibold text-red-600" type="submit">Eliminar</button>
-                  </div>
-                </form>
+                <VariantForm key={variant.id} productId={product.id} variant={variant} />
               ))}
             </div>
-            <form action={saveVariant} className="mt-5 grid gap-3 rounded-[var(--radius-sm)] bg-[#f7f5f0] p-4 md:grid-cols-3">
-              <input type="hidden" name="productId" value={product.id} />
-              <Field label="SKU"><input className={inputClass} name="sku" required /></Field>
-              <Field label="Nombre"><input className={inputClass} name="name" /></Field>
-              <Field label="Color"><input className={inputClass} name="color" /></Field>
-              <Field label="Talla"><input className={inputClass} name="size" /></Field>
-              <Field label="Precio €"><input className={inputClass} name="price" type="number" step="0.01" required /></Field>
-              <input type="hidden" name="stock" value="999" />
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <input name="isActive" type="checkbox" defaultChecked className="h-4 w-4 accent-[var(--accent)]" />
-                Variante disponible
-              </label>
-              <button className="h-11 rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white md:col-span-3" type="submit">Añadir variante</button>
-            </form>
+            <VariantForm productId={product.id} />
           </section>
         </>
       )}
