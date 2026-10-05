@@ -29,6 +29,11 @@ export function LoginForm({ callbackUrl = "/cuenta", labels }: LoginFormProps) {
       });
 
       if (result?.error) {
+        if (result.error === "PENDING_APPROVAL") {
+          setError(labels.accountPendingLogin);
+          return;
+        }
+
         setError(labels.loginError);
         return;
       }

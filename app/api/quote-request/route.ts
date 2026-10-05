@@ -25,6 +25,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Necesitas iniciar sesión para solicitar una compra." }, { status: 401 });
   }
 
+  if (!session.user.accountApproved) {
+    return NextResponse.json({ error: "Tu cuenta está pendiente de validación." }, { status: 403 });
+  }
+
   const prepared = await prepareCartOrder(body.items, session.user.id);
 
   if ("error" in prepared) {

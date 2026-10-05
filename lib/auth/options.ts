@@ -26,6 +26,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email.toLowerCase() },
+          include: { customer: { select: { approvedAt: true } } },
         });
 
         if (!user?.passwordHash) {
@@ -38,11 +39,16 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        if (user.role !== "ADMIN" && !user.customer?.approvedAt) {
+          throw new Error("PENDING_APPROVAL");
+        }
+
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
+          accountApproved: user.role === "ADMIN" || Boolean(user.customer?.approvedAt),
         };
       },
     }),
@@ -51,6 +57,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.accountApproved = user.accountApproved;
       }
 
       return token;
@@ -59,17 +66,19 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.sub;
         session.user.role = token.role;
+        session.user.accountApproved = token.accountApproved;
 
         if (token.sub) {
           const freshUser = await prisma.user.findUnique({
             where: { id: token.sub },
-            select: { name: true, email: true, role: true },
+            select: { name: true, email: true, role: true, customer: { select: { approvedAt: true } } },
           });
 
           if (freshUser) {
             session.user.name = freshUser.name;
             session.user.email = freshUser.email;
             session.user.role = freshUser.role;
+            session.user.accountApproved = freshUser.role === "ADMIN" || Boolean(freshUser.customer?.approvedAt);
           }
         }
       }

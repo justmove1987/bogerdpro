@@ -34,6 +34,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!session.user.accountApproved) {
+    return NextResponse.json(
+      { error: "Tu cuenta está pendiente de validación." },
+      { status: 403 },
+    );
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
   const prepared = await prepareCartOrder(body.items, session.user.id);
 

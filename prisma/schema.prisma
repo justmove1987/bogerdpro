@@ -81,23 +81,26 @@ model AdminUser {
 }
 
 model Customer {
-  id                String   @id @default(cuid())
-  userId            String?  @unique
-  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email             String   @unique
-  firstName         String?
-  lastName          String?
-  phone             String?
-  companyName       String?
-  taxId             String?
-  billingAddress    Json?
-  shippingAddress   Json?
-  marketingAccepted Boolean  @default(false)
-  orders            Order[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  userId              String?   @unique
+  user                User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email               String    @unique
+  firstName           String?
+  lastName            String?
+  phone               String?
+  companyName         String?
+  taxId               String?
+  approvedAt          DateTime?
+  approvalEmailSentAt DateTime?
+  billingAddress      Json?
+  shippingAddress     Json?
+  marketingAccepted   Boolean   @default(false)
+  orders              Order[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([companyName])
+  @@index([approvedAt])
   @@index([createdAt])
 }
 

@@ -24,7 +24,7 @@ export function applyDiscountRange(min?: number | null, max?: number | null, per
 export async function getCurrentUserBrandDiscounts(): Promise<BrandDiscountMap> {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
+  if (!session?.user?.id || !session.user.accountApproved) {
     return {};
   }
 

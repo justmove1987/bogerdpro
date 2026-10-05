@@ -18,6 +18,14 @@ const validateCartSchema = z.object({
 export async function POST(request: Request) {
   const body = validateCartSchema.parse(await request.json());
   const session = await getServerSession(authOptions);
+
+  if (!session?.user?.accountApproved) {
+    return NextResponse.json(
+      { ok: false, errors: [], items: [], error: "Tu cuenta está pendiente de validación." },
+      { status: 403 },
+    );
+  }
+
   const variantIds = body.items.map((item) => item.variantId);
   const variants = await prisma.productVariant.findMany({
     where: {

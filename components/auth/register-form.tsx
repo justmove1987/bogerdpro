@@ -1,27 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { useState, useTransition } from "react";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 type RegisterFormProps = {
-  callbackUrl?: string;
   labels: Dictionary["auth"];
 };
 
-export function RegisterForm({ callbackUrl = "/cuenta", labels }: RegisterFormProps) {
-  const router = useRouter();
+export function RegisterForm({ labels }: RegisterFormProps) {
   const [error, setError] = useState("");
+  const [successEmail, setSuccessEmail] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setSuccessEmail("");
     const form = event.currentTarget;
     const formData = new FormData(form);
     const password = String(formData.get("password") ?? "");
+    const email = String(formData.get("email") ?? "");
 
     startTransition(async () => {
       const response = await fetch("/api/auth/register", {
@@ -45,21 +44,24 @@ export function RegisterForm({ callbackUrl = "/cuenta", labels }: RegisterFormPr
         return;
       }
 
-      const result = await signIn("credentials", {
-        email: String(formData.get("email") ?? ""),
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        router.push("/login?callbackUrl=/cuenta");
-        router.refresh();
-        return;
-      }
-
-      router.push(callbackUrl);
-      router.refresh();
+      form.reset();
+      setSuccessEmail(email);
     });
+  }
+
+  if (successEmail) {
+    return (
+      <div className="w-full max-w-2xl rounded-[var(--radius-md)] border border-[#d8e7fb] bg-[#f4f8ff] p-6 shadow-[var(--shadow-soft)]">
+        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">BogerdPro</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{labels.registerPendingTitle}</h1>
+        <p className="mt-3 text-sm leading-6 text-[#31516f]">
+          {labels.registerPendingText.replace("{email}", successEmail)}
+        </p>
+        <Link href="/login" className="premium-focus mt-6 inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[#bdd4ef] bg-white px-4 text-sm font-semibold text-[#151515] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+          {labels.loginButton}
+        </Link>
+      </div>
+    );
   }
 
   return (

@@ -96,7 +96,7 @@ async function HomeProductSection({
 export default async function HomePage({ searchParams }: HomePageProps) {
   const rawSearchParams = await searchParams;
   const session = await getServerSession(authOptions);
-  const showPrices = Boolean(session?.user);
+  const showPrices = Boolean(session?.user?.accountApproved);
   const homeSearchParams = showPrices ? rawSearchParams : hidePriceSearchParams(rawSearchParams);
   const selected = parseCatalogSearchParams(homeSearchParams);
   const locale = await getCurrentLocale();

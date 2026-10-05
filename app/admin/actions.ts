@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth/guards";
+import { sendAccountApprovedEmail } from "@/lib/email/account-emails";
 import { saveLocalUpload } from "@/lib/uploads/storage";
 import { centsToEuros, eurosToCents, formNumber, formString, slugify } from "@/lib/admin/utils";
 import { inferProductCatalogGroups } from "@/lib/catalog/product-catalog-groups";
@@ -447,6 +448,48 @@ export async function saveUserProfile(formData: FormData) {
       });
     }
   });
+
+  revalidatePath("/admin/users");
+}
+
+export async function approveCustomerAccount(formData: FormData) {
+  await requireAdmin();
+  const userId = formString(formData, "userId");
+
+  if (!userId) {
+    throw new Error("Usuario obligatorio.");
+  }
+
+  const approvedAt = new Date();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, role: true, customer: { select: { id: true, approvedAt: true } } },
+  });
+
+  if (!user?.customer) {
+    throw new Error("Este usuario no tiene ficha de cliente.");
+  }
+
+  if (!user.email) {
+    throw new Error("Este usuario no tiene email.");
+  }
+
+  await prisma.customer.update({
+    where: { id: user.customer.id },
+    data: {
+      approvedAt: user.customer.approvedAt ?? approvedAt,
+    },
+  });
+
+  try {
+    await sendAccountApprovedEmail({ to: user.email, name: user.name });
+    await prisma.customer.update({
+      where: { id: user.customer.id },
+      data: { approvalEmailSentAt: new Date() },
+    });
+  } catch (error) {
+    console.error("[account-approval-email]", error);
+  }
 
   revalidatePath("/admin/users");
 }

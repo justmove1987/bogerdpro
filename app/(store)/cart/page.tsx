@@ -18,7 +18,7 @@ export default async function CartPage() {
       <Breadcrumbs items={[{ href: "/", label: dictionary.nav.home }, { label: dictionary.cart.title }]} />
       <h1 className="mt-8 text-4xl font-semibold tracking-tight">{dictionary.cart.title}</h1>
       <CartView
-        canCheckout={Boolean(session?.user)}
+        canCheckout={Boolean(session?.user?.accountApproved)}
         labels={{ ...dictionary.cart, standardVariant: dictionary.product.standardVariant }}
       />
     </div>

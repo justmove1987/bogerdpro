@@ -1,5 +1,5 @@
-import { Percent, Trash2 } from "lucide-react";
-import { deleteUser, deleteUserBrandDiscount, saveUserBrandDiscount, saveUserProfile } from "@/app/admin/actions";
+import { Percent, Trash2, UserCheck } from "lucide-react";
+import { approveCustomerAccount, deleteUser, deleteUserBrandDiscount, saveUserBrandDiscount, saveUserProfile } from "@/app/admin/actions";
 import { prisma } from "@/lib/db/prisma";
 
 export const dynamic = "force-dynamic";
@@ -38,14 +38,30 @@ export default async function AdminUsersPage() {
               <div>
                 <h2 className="text-xl font-semibold">{user.name ?? user.email ?? "Usuario sin nombre"}</h2>
                 <p className="mt-1 text-sm text-[#62615d]">{user.email ?? "Sin email"} · {user.role} · {user._count.orders} pedidos</p>
+                {user.role === "CUSTOMER" ? (
+                  <p className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${user.customer?.approvedAt ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+                    {user.customer?.approvedAt ? "Cuenta validada" : "Pendiente de validación"}
+                  </p>
+                ) : null}
               </div>
-              <form action={deleteUser}>
-                <input type="hidden" name="id" value={user.id} />
-                <button className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-red-200 px-3 text-sm font-semibold text-red-600 transition hover:bg-red-50" type="submit">
-                  <Trash2 size={15} />
-                  Borrar usuario
-                </button>
-              </form>
+              <div className="flex flex-wrap gap-2">
+                {user.role === "CUSTOMER" && !user.customer?.approvedAt ? (
+                  <form action={approveCustomerAccount}>
+                    <input type="hidden" name="userId" value={user.id} />
+                    <button className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--accent)] px-3 text-sm font-semibold text-white transition hover:bg-[#235fa5]" type="submit">
+                      <UserCheck size={15} />
+                      Validar cuenta
+                    </button>
+                  </form>
+                ) : null}
+                <form action={deleteUser}>
+                  <input type="hidden" name="id" value={user.id} />
+                  <button className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-red-200 px-3 text-sm font-semibold text-red-600 transition hover:bg-red-50" type="submit">
+                    <Trash2 size={15} />
+                    Borrar usuario
+                  </button>
+                </form>
+              </div>
             </div>
 
             <form action={saveUserProfile} className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">

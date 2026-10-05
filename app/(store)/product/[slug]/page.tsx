@@ -183,7 +183,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProductBySlug(slug, locale);
   const dictionary = await getCurrentDictionary();
   const session = await getServerSession(authOptions);
-  const showPrices = Boolean(session?.user);
+  const showPrices = Boolean(session?.user?.accountApproved);
   const discounts = await getCurrentUserBrandDiscounts();
 
   if (!product) {
@@ -250,7 +250,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {gender ? <span className="rounded-full border border-[#d8d1c5] bg-white px-3 py-1 text-[#62615d]">{gender}</span> : null}
             {product.category ? <span className="rounded-full border border-[#d8d1c5] bg-white px-3 py-1 text-[#62615d]">{product.category.name}</span> : null}
           </div>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-[#62615d]">{product.description}</p>
+          <p className="mt-6 max-w-2xl whitespace-pre-line text-base leading-8 text-[#62615d]">{product.description}</p>
 
           {showPrices ? (
             <ProductPurchasePanel
