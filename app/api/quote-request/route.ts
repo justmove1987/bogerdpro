@@ -20,13 +20,18 @@ const quoteRequestSchema = z.object({
 export async function POST(request: Request) {
   const body = quoteRequestSchema.parse(await request.json());
   const session = await getServerSession(authOptions);
-  const prepared = await prepareCartOrder(body.items, session?.user?.id);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Necesitas iniciar sesión para solicitar una compra." }, { status: 401 });
+  }
+
+  const prepared = await prepareCartOrder(body.items, session.user.id);
 
   if ("error" in prepared) {
     return NextResponse.json({ error: prepared.error }, { status: 400 });
   }
 
-  const customerEmail = session?.user?.email ?? body.email;
+  const customerEmail = session.user.email ?? body.email;
 
   if (!customerEmail) {
     return NextResponse.json({ error: "Inicia sesión o indica un email para enviar la solicitud." }, { status: 401 });
@@ -35,9 +40,9 @@ export async function POST(request: Request) {
   const order = await prisma.order.create({
     data: {
       orderNumber: createOrderNumber(),
-      userId: session?.user?.id ?? null,
+      userId: session.user.id,
       email: customerEmail,
-      customerName: session?.user?.name ?? null,
+      customerName: session.user.name ?? null,
       status: "PENDING",
       paymentStatus: "PENDING",
       currency: prepared.currency,

@@ -2,10 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getServerSession } from "next-auth";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { ProductBrowser } from "@/components/catalog/product-browser";
 import { Reveal } from "@/components/motion/reveal";
 import { getSiteContent } from "@/config/site-content";
+import { authOptions } from "@/lib/auth/options";
 import { getCatalogFilters, getCatalogProducts, parseCatalogSearchParams } from "@/lib/catalog/queries";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 import { getCurrentUserBrandDiscounts } from "@/lib/pricing/discounts";
@@ -14,6 +16,16 @@ import { absoluteUrl, defaultSeo, openGraphLocales, seoDescriptions, siteName } 
 type HomePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+function hidePriceSearchParams(searchParams: Record<string, string | string[] | undefined>) {
+  const next = { ...searchParams };
+  delete next.minPrice;
+  delete next.maxPrice;
+  if (next.sort === "price-asc" || next.sort === "price-desc") {
+    delete next.sort;
+  }
+  return next;
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getCurrentLocale();
@@ -53,11 +65,13 @@ async function HomeProductSection({
   searchParams,
   locale,
   dictionary,
+  showPrices,
 }: {
   selected: ReturnType<typeof parseCatalogSearchParams>;
   searchParams: Record<string, string | string[] | undefined>;
   locale: Awaited<ReturnType<typeof getCurrentLocale>>;
   dictionary: Awaited<ReturnType<typeof getCurrentDictionary>>;
+  showPrices: boolean;
 }) {
   const [filters, catalog, discounts] = await Promise.all([
     getCatalogFilters(locale),
@@ -73,13 +87,17 @@ async function HomeProductSection({
       searchParams={searchParams}
       actionPath="/"
       discounts={discounts}
+      showPrices={showPrices}
       labels={{ catalog: dictionary.catalog, search: dictionary.search }}
     />
   );
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const homeSearchParams = await searchParams;
+  const rawSearchParams = await searchParams;
+  const session = await getServerSession(authOptions);
+  const showPrices = Boolean(session?.user);
+  const homeSearchParams = showPrices ? rawSearchParams : hidePriceSearchParams(rawSearchParams);
   const selected = parseCatalogSearchParams(homeSearchParams);
   const locale = await getCurrentLocale();
   const dictionary = await getCurrentDictionary();
@@ -140,6 +158,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               searchParams={homeSearchParams}
               locale={locale}
               dictionary={dictionary}
+              showPrices={showPrices}
             />
           </Suspense>
         </div>

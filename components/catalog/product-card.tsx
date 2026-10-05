@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ShoppingCart } from "lucide-react";
+import { ArrowRight, CheckCircle2, LockKeyhole, ShoppingCart } from "lucide-react";
 import { formatPriceRange, formatPrice } from "@/lib/catalog/format";
 import { applyDiscountRange, type BrandDiscountMap } from "@/lib/pricing/discounts";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
@@ -54,7 +54,7 @@ function PriceAmount({ cents, currency }: { cents?: number | null; currency?: st
   );
 }
 
-export function ProductCard({ product, labels, discounts = {} }: { product: CatalogProductCard; labels: Dictionary["catalog"]; discounts?: BrandDiscountMap }) {
+export function ProductCard({ product, labels, discounts = {}, showPrices = true }: { product: CatalogProductCard; labels: Dictionary["catalog"]; discounts?: BrandDiscountMap; showPrices?: boolean }) {
   const image = product.images[0];
   const firstVariant = product.variants[0];
   const discountPercent = product.brand?.id ? discounts[product.brand.id] : undefined;
@@ -87,19 +87,31 @@ export function ProductCard({ product, labels, discounts = {} }: { product: Cata
           <p className="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-[#62615d]">{product.description}</p>
           <div className="mt-auto flex items-end justify-between gap-4 pt-5">
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#8a8174]">{labels.professionalPrice}</p>
-              {discountPercent ? (
-                <div className="mt-1">
-                  <p className="text-xs font-medium text-[#8a8174] line-through">
-                    {formatPriceRange(product.minPriceCents, product.maxPriceCents, firstVariant?.currency)}
-                  </p>
-                  <PriceAmount cents={discountedRange.min} currency={firstVariant?.currency} />
-                  <p className="mt-1 w-fit rounded-full bg-[#eef5ff] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
-                    {labels.customerDiscount.replace("{percent}", String(discountPercent))}
-                  </p>
-                </div>
+              {showPrices ? (
+                <>
+                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#8a8174]">{labels.professionalPrice}</p>
+                  {discountPercent ? (
+                    <div className="mt-1">
+                      <p className="text-xs font-medium text-[#8a8174] line-through">
+                        {formatPriceRange(product.minPriceCents, product.maxPriceCents, firstVariant?.currency)}
+                      </p>
+                      <PriceAmount cents={discountedRange.min} currency={firstVariant?.currency} />
+                      <p className="mt-1 w-fit rounded-full bg-[#eef5ff] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
+                        {labels.customerDiscount.replace("{percent}", String(discountPercent))}
+                      </p>
+                    </div>
+                  ) : (
+                    <PriceAmount cents={product.minPriceCents} currency={firstVariant?.currency} />
+                  )}
+                </>
               ) : (
-                <PriceAmount cents={product.minPriceCents} currency={firstVariant?.currency} />
+                <div className="max-w-[15rem] rounded-[var(--radius-sm)] bg-[#f7f5f0] px-3 py-2">
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[#8a8174]">
+                    <LockKeyhole size={13} />
+                    {labels.memberPriceTitle}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#151515]">{labels.memberPriceText}</p>
+                </div>
               )}
             </div>
             <span className="grid h-11 w-11 place-items-center rounded-[var(--radius-sm)] bg-[#151515] text-white transition duration-200 group-hover:scale-105 group-hover:bg-[var(--accent)]">

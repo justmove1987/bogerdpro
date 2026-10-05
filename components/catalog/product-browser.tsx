@@ -21,13 +21,14 @@ type ProductBrowserProps = {
   showPagination?: boolean;
   actionPath?: string;
   discounts?: BrandDiscountMap;
+  showPrices?: boolean;
   labels: {
     catalog: Dictionary["catalog"];
     search: Dictionary["search"];
   };
 };
 
-export function ProductBrowser({ filters, catalog, selected, searchParams, showPagination = true, actionPath = "/catalog", discounts = {}, labels }: ProductBrowserProps) {
+export function ProductBrowser({ filters, catalog, selected, searchParams, showPagination = true, actionPath = "/catalog", discounts = {}, showPrices = true, labels }: ProductBrowserProps) {
   const firstItem = catalog.total === 0 ? 0 : (catalog.page - 1) * catalog.perPage + 1;
   const lastItem = Math.min(catalog.total, catalog.page * catalog.perPage);
 
@@ -38,13 +39,14 @@ export function ProductBrowser({ filters, catalog, selected, searchParams, showP
       searchParams={searchParams}
       actionPath={actionPath}
       resultLabel={catalog.total === 0 ? `0 ${labels.catalog.count}` : `${firstItem}-${lastItem} ${labels.catalog.countOf} ${catalog.total} ${labels.catalog.count}`}
+      showPriceControls={showPrices}
       labels={labels}
     >
       {catalog.products.length > 0 ? (
         <>
           <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {catalog.products.map((product) => (
-              <ProductCard key={product.slug} product={product} labels={labels.catalog} discounts={discounts} />
+              <ProductCard key={product.slug} product={product} labels={labels.catalog} discounts={discounts} showPrices={showPrices} />
             ))}
           </div>
           {showPagination ? <Pagination page={catalog.page} pageCount={catalog.pageCount} searchParams={searchParams} basePath={actionPath} hash="products" labels={labels.catalog} /> : null}

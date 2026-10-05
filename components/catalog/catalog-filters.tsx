@@ -124,18 +124,20 @@ export function CatalogFilters({
   selected,
   actionPath = "/catalog",
   labels,
+  showPriceFilter = true,
   onPendingChange,
 }: {
   filters: CatalogFiltersData;
   selected: CatalogSearchParams;
   actionPath?: string;
   labels: Dictionary["catalog"];
+  showPriceFilter?: boolean;
   onPendingChange?: (pending: boolean) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const priceCount = Number(typeof selected.minPrice === "number") + Number(typeof selected.maxPrice === "number");
+  const priceCount = showPriceFilter ? Number(typeof selected.minPrice === "number") + Number(typeof selected.maxPrice === "number") : 0;
   const totalSelected =
     selectedCount(selected.catalog) +
     selectedCount(selected.category) +
@@ -176,7 +178,7 @@ export function CatalogFilters({
     <aside className="h-fit rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-4">
       <form ref={formRef} action={actionPath} onChange={applyFilters}>
         {selected.q ? <input type="hidden" name="q" value={selected.q} /> : null}
-        {selected.sort !== "relevance" ? <input type="hidden" name="sort" value={selected.sort} /> : null}
+        {selected.sort !== "relevance" ? <input type="hidden" name="sort" value={showPriceFilter || !selected.sort.startsWith("price-") ? selected.sort : "relevance"} /> : null}
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">{labels.filters}</h2>
@@ -254,32 +256,34 @@ export function CatalogFilters({
             </div>
           </FilterGroup>
 
-          <FilterGroup title={labels.price} count={priceCount}>
-            <div className="grid grid-cols-2 gap-2 px-2 py-1">
-              <label className="text-xs font-medium text-[#62615d]">
-                {labels.min}
-                <input
-                  className="premium-focus mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm"
-                  name="minPrice"
-                  type="number"
-                  min="0"
-                  step="1"
-                  defaultValue={selected.minPrice ?? ""}
-                />
-              </label>
-              <label className="text-xs font-medium text-[#62615d]">
-                {labels.max}
-                <input
-                  className="premium-focus mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm"
-                  name="maxPrice"
-                  type="number"
-                  min="0"
-                  step="1"
-                  defaultValue={selected.maxPrice ?? ""}
-                />
-              </label>
-            </div>
-          </FilterGroup>
+          {showPriceFilter ? (
+            <FilterGroup title={labels.price} count={priceCount}>
+              <div className="grid grid-cols-2 gap-2 px-2 py-1">
+                <label className="text-xs font-medium text-[#62615d]">
+                  {labels.min}
+                  <input
+                    className="premium-focus mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm"
+                    name="minPrice"
+                    type="number"
+                    min="0"
+                    step="1"
+                    defaultValue={selected.minPrice ?? ""}
+                  />
+                </label>
+                <label className="text-xs font-medium text-[#62615d]">
+                  {labels.max}
+                  <input
+                    className="premium-focus mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[#d8d1c5] px-3 text-sm"
+                    name="maxPrice"
+                    type="number"
+                    min="0"
+                    step="1"
+                    defaultValue={selected.maxPrice ?? ""}
+                  />
+                </label>
+              </div>
+            </FilterGroup>
+          ) : null}
 
           {filters.attributes.map((attribute) => (
             <FilterGroup key={attribute.slug} title={attribute.name} count={selectedCount(selected.attribute?.filter((slug) => attribute.values.some((value) => value.slug === slug)))}>

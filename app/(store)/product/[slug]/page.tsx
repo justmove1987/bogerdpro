@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { CheckCircle2, Download, FileText } from "lucide-react";
+import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { CheckCircle2, Download, FileText, LockKeyhole } from "lucide-react";
 import { ProductPurchasePanel } from "@/components/cart/product-purchase-panel";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductImageGallery } from "@/components/product/product-image-gallery";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
+import { authOptions } from "@/lib/auth/options";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/queries";
 import { getCurrentDictionary, getCurrentLocale } from "@/lib/i18n/locale";
 import { applyDiscountCents, getCurrentUserBrandDiscounts } from "@/lib/pricing/discounts";
@@ -111,6 +114,31 @@ function imageUrlHasCode(url: string, code: string) {
   return [`_${code}_`, `-${code}-`, `_${code}-`, `-${code}_`, `/${code}_`, `/${code}-`].some((token) => url.includes(token));
 }
 
+function MemberPricePanel({ labels, createAccountLabel, loginLabel }: { labels: Awaited<ReturnType<typeof getCurrentDictionary>>["product"]; createAccountLabel: string; loginLabel: string }) {
+  return (
+    <div className="mt-8 rounded-[var(--radius-md)] border border-[#d8e7fb] bg-[#f4f8ff] p-5">
+      <div className="flex gap-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--radius-sm)] bg-white text-[var(--accent)] shadow-sm">
+          <LockKeyhole size={20} />
+        </span>
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">{labels.memberPriceTitle}</p>
+          <h2 className="mt-2 text-xl font-semibold text-[#151515]">{labels.memberPriceText}</h2>
+          <p className="mt-2 text-sm leading-6 text-[#31516f]">{labels.memberPriceDescription}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/registro" className="premium-focus inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white transition hover:bg-black">
+              {createAccountLabel}
+            </Link>
+            <Link href="/login" className="premium-focus inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[#bdd4ef] bg-white px-4 text-sm font-semibold text-[#151515] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+              {loginLabel}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const locale = await getCurrentLocale();
@@ -154,6 +182,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const locale = await getCurrentLocale();
   const product = await getProductBySlug(slug, locale);
   const dictionary = await getCurrentDictionary();
+  const session = await getServerSession(authOptions);
+  const showPrices = Boolean(session?.user);
   const discounts = await getCurrentUserBrandDiscounts();
 
   if (!product) {
@@ -184,7 +214,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           category: product.category?.name,
           description: productDescription(product),
           image: product.images.map((image) => absoluteUrl(image.url)),
-          offers: firstVariant
+          offers: showPrices && firstVariant
             ? {
                 "@type": "Offer",
                 priceCurrency: firstVariant.currency,
@@ -222,27 +252,31 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
           <p className="mt-6 max-w-2xl text-base leading-8 text-[#62615d]">{product.description}</p>
 
-          <ProductPurchasePanel
-            product={{
-              slug: product.slug,
-              name: product.name,
-              sku: product.sku,
-              image: mainImage?.url ?? "/images/products/product-image-pending.svg",
-            }}
-            variants={product.variants.map((variant) => ({
-              id: variant.id,
-              sku: variant.sku,
-              color: variant.color,
-              size: variant.size,
-              imageUrl: variantImageUrl(product.sku, variant.sku, product.images),
-              priceCents: applyDiscountCents(variant.priceCents, discountPercent),
-              originalPriceCents: discountPercent ? variant.priceCents : null,
-              discountPercent: discountPercent ?? null,
-              currency: variant.currency,
-              stock: variant.stock,
-            }))}
-            labels={dictionary.product}
-          />
+          {showPrices ? (
+            <ProductPurchasePanel
+              product={{
+                slug: product.slug,
+                name: product.name,
+                sku: product.sku,
+                image: mainImage?.url ?? "/images/products/product-image-pending.svg",
+              }}
+              variants={product.variants.map((variant) => ({
+                id: variant.id,
+                sku: variant.sku,
+                color: variant.color,
+                size: variant.size,
+                imageUrl: variantImageUrl(product.sku, variant.sku, product.images),
+                priceCents: applyDiscountCents(variant.priceCents, discountPercent),
+                originalPriceCents: discountPercent ? variant.priceCents : null,
+                discountPercent: discountPercent ?? null,
+                currency: variant.currency,
+                stock: variant.stock,
+              }))}
+              labels={dictionary.product}
+            />
+          ) : (
+            <MemberPricePanel labels={dictionary.product} createAccountLabel={dictionary.auth.createAccount} loginLabel={dictionary.nav.login} />
+          )}
 
           {product.documents.length ? (
             <div className="mt-6 rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
@@ -310,7 +344,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {relatedProducts.map((related) => (
-              <ProductCard key={related.slug} product={related} labels={dictionary.catalog} discounts={discounts} />
+              <ProductCard key={related.slug} product={related} labels={dictionary.catalog} discounts={discounts} showPrices={showPrices} />
             ))}
           </div>
         </section>

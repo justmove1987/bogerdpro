@@ -114,19 +114,21 @@ export function CartView({ canCheckout, labels }: CartViewProps) {
               <p className="mt-2 text-sm text-[#62615d]">
                 {[item.color, item.size].filter(Boolean).join(" · ") || labels.standardVariant}
               </p>
-              <div className="mt-3">
-                {item.discountPercent && item.originalPriceCents ? (
-                  <p className="text-xs font-medium text-[#8a8174] line-through">
-                    {formatPriceRange(item.originalPriceCents, item.originalPriceCents, item.currency)}
-                  </p>
-                ) : null}
-                <p className="text-sm font-semibold">{formatPriceRange(item.priceCents, item.priceCents, item.currency)}</p>
-                {item.discountPercent ? (
-                  <p className="mt-1 w-fit rounded-full bg-[#eef5ff] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
-                    {labels.customerDiscount.replace("{percent}", String(item.discountPercent))}
-                  </p>
-                ) : null}
-              </div>
+              {canCheckout ? (
+                <div className="mt-3">
+                  {item.discountPercent && item.originalPriceCents ? (
+                    <p className="text-xs font-medium text-[#8a8174] line-through">
+                      {formatPriceRange(item.originalPriceCents, item.originalPriceCents, item.currency)}
+                    </p>
+                  ) : null}
+                  <p className="text-sm font-semibold">{formatPriceRange(item.priceCents, item.priceCents, item.currency)}</p>
+                  {item.discountPercent ? (
+                    <p className="mt-1 w-fit rounded-full bg-[#eef5ff] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
+                      {labels.customerDiscount.replace("{percent}", String(item.discountPercent))}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
               <div className="flex h-10 items-center overflow-hidden rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white">
@@ -157,23 +159,29 @@ export function CartView({ canCheckout, labels }: CartViewProps) {
       <aside className="h-fit rounded-[var(--radius-md)] border border-[#e7e2d8] bg-white p-5">
         <h2 className="text-lg font-semibold">{labels.summary}</h2>
         <div className="mt-5 grid gap-3 text-sm text-[#62615d]">
-          <div className="flex justify-between">
-            <span>{labels.subtotal}</span>
-            <span>{formatMoney(subtotalCents)}</span>
-          </div>
+          {canCheckout ? (
+            <div className="flex justify-between">
+              <span>{labels.subtotal}</span>
+              <span>{formatMoney(subtotalCents)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between">
             <span>{labels.shipping}</span>
             <span>{labels.shippingPending}</span>
           </div>
         </div>
         <div className="mt-5 border-t border-[#eee9df] pt-5">
-          <div className="flex justify-between text-lg font-bold">
-            <span>{labels.totalBase}</span>
-            <span>{formatMoney(totalCents)}</span>
-          </div>
-          <p className="mt-2 rounded-[var(--radius-sm)] bg-[#f7f5f0] px-3 py-2 text-xs leading-5 text-[#62615d]">
-            {labels.taxNotice}
-          </p>
+          {canCheckout ? (
+            <>
+              <div className="flex justify-between text-lg font-bold">
+                <span>{labels.totalBase}</span>
+                <span>{formatMoney(totalCents)}</span>
+              </div>
+              <p className="mt-2 rounded-[var(--radius-sm)] bg-[#f7f5f0] px-3 py-2 text-xs leading-5 text-[#62615d]">
+                {labels.taxNotice}
+              </p>
+            </>
+          ) : null}
           {!canCheckout ? (
             <div className="mt-4 rounded-[var(--radius-sm)] border border-[#d8e7fb] bg-[#f4f8ff] px-3 py-3 text-sm leading-6 text-[#31516f]">
               <p className="font-semibold text-[#17436b]">{labels.loginRequiredTitle}</p>
@@ -202,18 +210,22 @@ export function CartView({ canCheckout, labels }: CartViewProps) {
               <ArrowRight size={17} color="#ffffff" />
             </Link>
           )}
-          <button
-            type="button"
-            onClick={requestQuote}
-            disabled={isBusy}
-            className="premium-focus mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-5 text-sm font-semibold text-[#151515] transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:opacity-50"
-          >
-            <FileText size={17} />
-            {isRequestingQuote ? labels.requestingQuote : labels.requestQuote}
-          </button>
-          <p className="mt-3 text-xs leading-5 text-[#62615d]">
-            {labels.quoteText}
-          </p>
+          {canCheckout ? (
+            <>
+              <button
+                type="button"
+                onClick={requestQuote}
+                disabled={isBusy}
+                className="premium-focus mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[#d8d1c5] bg-white px-5 text-sm font-semibold text-[#151515] transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:opacity-50"
+              >
+                <FileText size={17} />
+                {isRequestingQuote ? labels.requestingQuote : labels.requestQuote}
+              </button>
+              <p className="mt-3 text-xs leading-5 text-[#62615d]">
+                {labels.quoteText}
+              </p>
+            </>
+          ) : null}
           <button type="button" onClick={clearCart} className="mt-4 inline-flex w-full justify-center text-sm font-semibold text-[#62615d] hover:text-red-600">
             {labels.clear}
           </button>
