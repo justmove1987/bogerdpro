@@ -126,8 +126,8 @@ function MemberPricePanel({ labels, createAccountLabel, loginLabel }: { labels: 
           <h2 className="mt-2 text-xl font-semibold text-[#151515]">{labels.memberPriceText}</h2>
           <p className="mt-2 text-sm leading-6 text-[#31516f]">{labels.memberPriceDescription}</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/registro" className="premium-focus inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white transition hover:bg-black">
-              {createAccountLabel}
+            <Link href="/registro" className="premium-focus inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[#151515] px-4 text-sm font-semibold text-white transition hover:bg-black [&_*]:text-white" style={{ color: "#ffffff" }}>
+              <span style={{ color: "#ffffff" }}>{createAccountLabel}</span>
             </Link>
             <Link href="/login" className="premium-focus inline-flex h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[#bdd4ef] bg-white px-4 text-sm font-semibold text-[#151515] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
               {loginLabel}
