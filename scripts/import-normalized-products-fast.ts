@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { slugify } from "../lib/admin/utils";
+import { inferProductCatalogGroups } from "../lib/catalog/product-catalog-groups";
 import { normalizeColorGroup, normalizeSizeGroup } from "../lib/catalog/filter-groups";
 
 type NormalizedVariant = {
@@ -96,66 +97,80 @@ async function importProduct(item: NormalizedProduct) {
 
   const brandId = await getOrCreateBrandId(item.brand);
   const categoryId = await getOrCreateCategoryId(item.category, item.subcategory);
-  const prices = item.variants.map((variant) => variant.priceCents);
-  const product = await prisma.product.create({
-    data: {
-      sku: item.productNumber,
-      name: item.name,
-      slug: item.slug,
-      description: item.description,
-      gender: item.gender ?? null,
-      material: item.material ?? null,
-      specifications: item.specifications ?? [],
-      status: "ACTIVE",
-      isActive: true,
-      minPriceCents: Math.min(...prices),
-      maxPriceCents: Math.max(...prices),
-      categoryId,
-      brandId,
-    },
-    select: { id: true },
-  });
-
-  if (item.images.length) {
-    await prisma.productImage.createMany({
-      data: item.images.slice(0, 8).map((url, position) => ({
-        productId: product.id,
-        url,
-        alt: item.name,
-        position,
-      })),
+  await prisma.$transaction(async (tx) => {
+    const prices = item.variants.map((variant) => variant.priceCents);
+    const product = await tx.product.create({
+      data: {
+        sku: item.productNumber,
+        name: item.name,
+        slug: item.slug,
+        description: item.description,
+        gender: item.gender ?? null,
+        material: item.material ?? null,
+        specifications: item.specifications ?? [],
+        status: "ACTIVE",
+        isActive: true,
+        minPriceCents: Math.min(...prices),
+        maxPriceCents: Math.max(...prices),
+        categoryId,
+        brandId,
+      },
+      select: { id: true },
     });
-  }
 
-  if (item.documents?.length) {
-    await prisma.productDocument.createMany({
-      data: item.documents.map((document, position) => ({
+    if (item.images.length) {
+      await tx.productImage.createMany({
+        data: item.images.slice(0, 8).map((url, position) => ({
+          productId: product.id,
+          url,
+          alt: item.name,
+          position,
+        })),
+      });
+    }
+
+    if (item.documents?.length) {
+      await tx.productDocument.createMany({
+        data: item.documents.map((document, position) => ({
+          productId: product.id,
+          type: document.type,
+          title: document.title,
+          url: document.url,
+          position,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    await tx.productVariant.createMany({
+      data: item.variants.map((variant) => ({
         productId: product.id,
-        type: document.type,
-        title: document.title,
-        url: document.url,
-        position,
+        sku: variant.sku,
+        name: variant.name,
+        color: variant.color,
+        colorGroup: normalizeColorGroup(variant.color),
+        size: variant.size,
+        sizeGroup: normalizeSizeGroup(variant.size),
+        priceCents: variant.priceCents,
+        stock: variant.stock,
+        isActive: true,
+        attributes: item.attributes,
       })),
       skipDuplicates: true,
     });
-  }
 
-  await prisma.productVariant.createMany({
-    data: item.variants.map((variant) => ({
-      productId: product.id,
-      sku: variant.sku,
-      name: variant.name,
-      color: variant.color,
-      colorGroup: normalizeColorGroup(variant.color),
-      size: variant.size,
-      sizeGroup: normalizeSizeGroup(variant.size),
-      priceCents: variant.priceCents,
-      stock: variant.stock,
-      isActive: true,
-      attributes: item.attributes,
-    })),
-    skipDuplicates: true,
-  });
+    const groups = inferProductCatalogGroups({
+      name: item.name,
+      description: item.description,
+      category: { name: item.subcategory ?? item.category },
+      brand: { name: item.brand },
+    });
+    if (groups.length) {
+      await tx.productCatalogGroup.createMany({
+        data: groups.map((group) => ({ productId: product.id, group })),
+      });
+    }
+  }, { timeout: 30000 });
 
   return true;
 }

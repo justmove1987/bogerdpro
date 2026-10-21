@@ -5,6 +5,7 @@ import re
 import sys
 import unicodedata
 from collections import OrderedDict
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -22,7 +23,7 @@ def cents(value):
     if not value:
         return None
     try:
-        return int(round(float(value.replace(",", ".")) * 100))
+        return int((Decimal(value.replace(",", ".")) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
     except ValueError:
         return None
 
@@ -79,6 +80,9 @@ def spec(label, value):
 def normalize(xlsx_path: Path, output_path: Path):
     workbook = load_workbook(xlsx_path, read_only=True, data_only=True)
     worksheet = workbook.active
+    if worksheet.title not in {"ROL", "STA"}:
+        raise ValueError(f"Unsupported catalogue sheet: {worksheet.title}")
+    is_roly = worksheet.title == "ROL"
     rows = worksheet.iter_rows(values_only=True)
     header = [str(value).strip() if value is not None else "" for value in next(rows)]
     indexes = {name: index for index, name in enumerate(header) if name}
@@ -93,7 +97,7 @@ def normalize(xlsx_path: Path, output_path: Path):
         sku = text(raw.get("PRODUCTCODE"))
         model = text(raw.get("MODELCODE"))
         name = clean_title(raw.get("MODELNAME"))
-        price = cents(raw.get("PRICE < 500 UNITS"))
+        price = cents(raw.get("PRICE UNIT") if is_roly else raw.get("PRICE < 500 UNITS"))
         color = clean_color(raw.get("COLOR"))
         size = clean_size(raw.get("SIZE"))
 
@@ -144,11 +148,11 @@ def normalize(xlsx_path: Path, output_path: Path):
                 "name": name,
                 "slug": f"{slugify(name)}-{slugify(model)}",
                 "description": description,
-                "gender": None,
+                "gender": text(raw.get("GENDER")),
                 "material": composition,
                 "category": category,
                 "subcategory": family,
-                "brand": "Stamina",
+                "brand": "Roly" if is_roly else "Stamina",
                 "images": images[:12],
                 "documents": [],
                 "specifications": specifications,
@@ -178,7 +182,7 @@ def normalize(xlsx_path: Path, output_path: Path):
                 "color": color,
                 "size": size,
                 "priceCents": price,
-                "stock": 999,
+                "stock": 0 if is_roly else 999,
             }
         )
 
