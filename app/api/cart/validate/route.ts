@@ -1,3 +1,4 @@
+import { customerPriceCents } from "@/lib/pricing/brand-prices";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     },
     include: {
       product: {
-        select: { name: true, slug: true, brandId: true },
+        select: { name: true, slug: true, brandId: true, brand: { select: { slug: true } } },
       },
     },
   });
@@ -67,8 +68,8 @@ export async function POST(request: Request) {
       return {
         variantId: variant.id,
         sku: variant.sku,
-        priceCents: applyDiscountCents(variant.priceCents, discountPercent),
-        originalPriceCents: discountPercent ? variant.priceCents : null,
+        priceCents: applyDiscountCents(customerPriceCents(variant.priceCents, variant.product.brand), discountPercent),
+        originalPriceCents: discountPercent ? customerPriceCents(variant.priceCents, variant.product.brand) : null,
         discountPercent,
         currency: variant.currency,
         productName: formatDisplayTitle(variant.product.name),

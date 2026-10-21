@@ -1,3 +1,4 @@
+import { customerPriceCents, doubledPriceBrandSlugs, withCustomerPrices } from "@/lib/pricing/brand-prices";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
 import { defaultLocale, type Locale } from "@/config/i18n";
@@ -106,11 +107,11 @@ function localizeBrand<T extends { name: string; translations?: { name: string }
   };
 }
 
-function localizeProduct<T extends { name: string; description: string | null; translations?: { name: string; description?: string | null; metaTitle?: string | null; metaDescription?: string | null }[]; category?: any; brand?: any }>(product: T) {
+function localizeProduct<T extends { name: string; description: string | null; translations?: { name: string; description?: string | null; metaTitle?: string | null; metaDescription?: string | null }[]; category?: any; brand?: any; minPriceCents?: number | null; maxPriceCents?: number | null; variants?: { priceCents: number }[] }>(product: T) {
   const translation = product.translations?.[0];
 
   return {
-    ...product,
+    ...withCustomerPrices(product),
     name: formatDisplayTitle(translation?.name ?? product.name) as string,
     description: translation?.description ?? product.description,
     metaTitle: translation?.metaTitle ?? ("metaTitle" in product ? product.metaTitle : undefined),
@@ -179,18 +180,33 @@ function buildSearchWhere(query: string | undefined, locale: Locale): Prisma.Pro
 }
 
 function buildProductWhere(filters: CatalogSearchParams, locale: Locale = defaultLocale): Prisma.ProductWhereInput {
+  if (typeof filters.minPrice === "number" || typeof filters.maxPrice === "number") {
+    const withoutPrice = { ...filters, minPrice: undefined, maxPrice: undefined };
+    return {
+      AND: [
+        buildProductWhere(withoutPrice, locale),
+        { OR: [1, 2].map((multiplier) => ({
+          ...(multiplier === 2
+            ? { brand: { slug: { in: doubledPriceBrandSlugs } } }
+            : { OR: [{ brandId: null }, { brand: { slug: { notIn: doubledPriceBrandSlugs } } }] }),
+          variants: { some: {
+            isActive: true,
+            ...(filters.color?.length ? { colorGroup: { in: filters.color } } : {}),
+            ...(filters.size?.length ? { sizeGroup: { in: filters.size } } : {}),
+            priceCents: {
+              ...(typeof filters.minPrice === "number" ? { gte: Math.ceil(filters.minPrice * 100 / multiplier) } : {}),
+              ...(typeof filters.maxPrice === "number" ? { lte: Math.floor(filters.maxPrice * 100 / multiplier) } : {}),
+            },
+          } },
+        })) },
+      ],
+    };
+  }
   const variantFilters = {
     isActive: true,
     ...(filters.color?.length ? { colorGroup: { in: filters.color } } : {}),
     ...(filters.size?.length ? { sizeGroup: { in: filters.size } } : {}),
-    ...(typeof filters.minPrice === "number" || typeof filters.maxPrice === "number"
-      ? {
-          priceCents: {
-            ...(typeof filters.minPrice === "number" ? { gte: Math.round(filters.minPrice * 100) } : {}),
-            ...(typeof filters.maxPrice === "number" ? { lte: Math.round(filters.maxPrice * 100) } : {}),
-          },
-        }
-      : {}),
+
   };
 
   const andFilters = [
@@ -204,8 +220,6 @@ function buildProductWhere(filters: CatalogSearchParams, locale: Locale = defaul
     status: "ACTIVE" as const,
     ...visibleProductImageWhere,
     ...(andFilters.length ? { AND: andFilters } : {}),
-    ...(typeof filters.minPrice === "number" ? { maxPriceCents: { gte: Math.round(filters.minPrice * 100) } } : {}),
-    ...(typeof filters.maxPrice === "number" ? { minPriceCents: { lte: Math.round(filters.maxPrice * 100) } } : {}),
     ...(filters.category?.length ? { category: { slug: { in: filters.category } } } : {}),
     ...(filters.brand?.length ? { brand: { slug: { in: filters.brand } } } : {}),
     ...(filters.gender?.length ? { gender: { in: filters.gender } } : {}),
@@ -256,12 +270,20 @@ async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: 
   const where = buildProductWhere(filters, locale);
   const skip = (filters.page - 1) * PRODUCTS_PER_PAGE;
 
+  const priceSortedIds = filters.sort === "price-asc" || filters.sort === "price-desc"
+    ? (await prisma.product.findMany({ where, select: { id: true, name: true, minPriceCents: true, brand: { select: { slug: true } } } }))
+      .sort((a, b) => {
+        const aPrice = typeof a.minPriceCents === "number" ? customerPriceCents(a.minPriceCents, a.brand) : Infinity;
+        const bPrice = typeof b.minPriceCents === "number" ? customerPriceCents(b.minPriceCents, b.brand) : Infinity;
+        return (filters.sort === "price-desc" ? bPrice - aPrice : aPrice - bPrice) || a.name.localeCompare(b.name);
+      }).slice(skip, skip + PRODUCTS_PER_PAGE).map((product) => product.id)
+    : null;
   const [total, products] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
-      where,
+      where: priceSortedIds ? { AND: [where, { id: { in: priceSortedIds } }] } : where,
       orderBy: productOrderBy(filters.sort),
-      skip,
+      skip: priceSortedIds ? 0 : skip,
       take: PRODUCTS_PER_PAGE,
       select: {
         id: true,
@@ -302,7 +324,7 @@ async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: 
   ]);
 
   return {
-    products: products.map(localizeProduct),
+    products: (priceSortedIds ? products.sort((a, b) => priceSortedIds.indexOf(a.id) - priceSortedIds.indexOf(b.id)) : products).map(localizeProduct),
     total,
     page: filters.page,
     pageCount: Math.max(1, Math.ceil(total / PRODUCTS_PER_PAGE)),
@@ -310,7 +332,7 @@ async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: 
   };
 }
 
-const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v1"], {
+const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v2-brand-prices"], {
   revalidate: CATALOG_CACHE_SECONDS,
   tags: ["catalog"],
 });

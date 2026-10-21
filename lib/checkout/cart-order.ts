@@ -1,3 +1,4 @@
+import { customerPriceCents } from "@/lib/pricing/brand-prices";
 import { prisma } from "@/lib/db/prisma";
 import { formatDisplayTitle } from "@/lib/catalog/format";
 import { applyDiscountCents, normalizeDiscountPercent } from "@/lib/pricing/discounts";
@@ -48,7 +49,7 @@ export async function prepareCartOrder(items: CheckoutCartItem[], userId?: strin
     },
     include: {
       product: {
-        select: { id: true, name: true, brandId: true },
+        select: { id: true, name: true, brandId: true, brand: { select: { slug: true } } },
       },
     },
   });
@@ -81,7 +82,8 @@ export async function prepareCartOrder(items: CheckoutCartItem[], userId?: strin
     const productName = formatDisplayTitle(variant.product.name) ?? variant.product.name;
     const name = variantLabel ? `${productName} (${variantLabel})` : productName;
     const discountPercent = variant.product.brandId ? discountsByBrandId.get(variant.product.brandId) ?? null : null;
-    const unitCents = applyDiscountCents(variant.priceCents, discountPercent);
+    const customerCents = customerPriceCents(variant.priceCents, variant.product.brand);
+    const unitCents = applyDiscountCents(customerCents, discountPercent);
 
     return {
       productId: variant.product.id,
@@ -90,7 +92,7 @@ export async function prepareCartOrder(items: CheckoutCartItem[], userId?: strin
       sku: variant.sku,
       quantity: item.quantity,
       unitCents,
-      originalUnitCents: variant.priceCents,
+      originalUnitCents: customerCents,
       discountPercent,
       totalCents: unitCents * item.quantity,
       currency: variant.currency,
