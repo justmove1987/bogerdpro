@@ -1,4 +1,4 @@
-export const doubledPriceBrandSlugs = ["roly", "mukua", "velilla", "vpro"];
+export const doubledPriceBrandSlugs = ["roly", "stamina", "mukua", "velilla", "vpro"];
 
 type PriceBrand = { slug: string } | null | undefined;
 

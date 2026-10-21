@@ -332,7 +332,7 @@ async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: 
   };
 }
 
-const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v2-brand-prices"], {
+const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v3-stamina"], {
   revalidate: CATALOG_CACHE_SECONDS,
   tags: ["catalog"],
 });

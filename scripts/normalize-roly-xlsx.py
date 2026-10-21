@@ -148,7 +148,7 @@ def normalize(xlsx_path: Path, output_path: Path):
                 "material": composition,
                 "category": category,
                 "subcategory": family,
-                "brand": "Roly",
+                "brand": "Stamina",
                 "images": images[:12],
                 "documents": [],
                 "specifications": specifications,

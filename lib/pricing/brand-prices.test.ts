@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { customerPriceCents, withCustomerPrices } from "./brand-prices";
 
-test("the four requested brands double their supplier prices", () => {
-  for (const slug of ["roly", "mukua", "velilla", "vpro", " ROLY "]) {
+test("the requested brands double their supplier prices", () => {
+  for (const slug of ["roly", "stamina", "mukua", "velilla", "vpro", " ROLY ", " STAMINA "]) {
     assert.equal(customerPriceCents(1299, { slug }), 2598);
     assert.equal(customerPriceCents(0, { slug }), 0);
   }
