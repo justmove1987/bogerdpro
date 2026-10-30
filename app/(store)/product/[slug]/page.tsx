@@ -229,6 +229,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         items={[
           { href: "/", label: dictionary.nav.home },
           { href: "/catalog", label: dictionary.catalog.catalogs },
+          ...product.categoryAncestors.map((category) => ({ href: `/?category=${encodeURIComponent(category.slug)}#products`, label: category.name })),
           ...(product.category ? [{ href: `/?category=${encodeURIComponent(product.category.slug)}#products`, label: product.category.name }] : []),
           { label: product.name },
         ]}

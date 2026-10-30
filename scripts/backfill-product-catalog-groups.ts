@@ -1,3 +1,4 @@
+import { categoryCatalogGroup } from "@/lib/catalog/category-tree";
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
@@ -15,6 +16,7 @@ async function main() {
       id: true,
       name: true,
       description: true,
+      categoryId: true,
       category: { select: { name: true, slug: true } },
       brand: { select: { name: true, slug: true } },
     },
@@ -23,7 +25,9 @@ async function main() {
   let groupRows = 0;
 
   for (const product of products) {
-    const groups = inferProductCatalogGroups(product);
+    const categories = await prisma.category.findMany();
+  const manual = categoryCatalogGroup(categories, product.categoryId);
+  const groups = manual ? [manual] : inferProductCatalogGroups(product);
 
     await prisma.$transaction([
       prisma.productCatalogGroup.deleteMany({ where: { productId: product.id } }),

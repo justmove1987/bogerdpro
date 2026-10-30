@@ -1,3 +1,4 @@
+import { categoryDescendants, categoryPath } from "@/lib/catalog/category-tree";
 import { customerPriceCents, doubledPriceBrandSlugs, withCustomerPrices } from "@/lib/pricing/brand-prices";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
@@ -266,8 +267,15 @@ function productOrderBy(sort: CatalogSearchParams["sort"]) {
   return [{ isFeatured: "desc" as const }, { createdAt: "desc" as const }];
 }
 
+async function expandCategoryFilters(filters: CatalogSearchParams): Promise<CatalogSearchParams> {
+  if (!filters.category?.length) return filters;
+  const categories = await prisma.category.findMany();
+  const ids = new Set(categories.filter((category) => filters.category?.includes(category.slug)).flatMap((category) => [...categoryDescendants(categories, category.id)]));
+  return { ...filters, category: [...new Set([...filters.category, ...categories.filter((category) => ids.has(category.id)).map((category) => category.slug)])] };
+}
+
 async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
-  const where = buildProductWhere(filters, locale);
+  const where = buildProductWhere(await expandCategoryFilters(filters), locale);
   const skip = (filters.page - 1) * PRODUCTS_PER_PAGE;
 
   const priceSortedIds = filters.sort === "price-asc" || filters.sort === "price-desc"
@@ -332,7 +340,7 @@ async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: 
   };
 }
 
-const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v4-roly-catalog"], {
+const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v5-category-tree"], {
   revalidate: CATALOG_CACHE_SECONDS,
   tags: ["catalog"],
 });
@@ -349,6 +357,7 @@ export async function getCatalogFilters(locale: Locale = defaultLocale) {
 }
 
 async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, locale: Locale = defaultLocale) {
+  filters = await expandCategoryFilters(filters);
   const categoryFacetWhere = buildFacetWhere(filters, "category", locale);
   const brandFacetWhere = buildFacetWhere(filters, "brand", locale);
   const colorFacetWhere = buildFacetWhere(filters, "color", locale);
@@ -437,6 +446,7 @@ async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, 
     }),
   ]);
 
+  const localizedCategories = categories.map(localizeCategory);
   return {
     catalogGroups: catalogGroupKeys
       .map((key) => ({
@@ -444,7 +454,10 @@ async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, 
         count: catalogGroupCounts.find((item) => item.group === key)?._count._all ?? 0,
       }))
       .filter((group) => group.count > 0),
-    categories: categories.filter((category) => category._count.products > 0).map(localizeCategory),
+    categories: categories.map((category) => {
+      const descendants = categoryDescendants(categories, category.id);
+      return { ...localizeCategory(category), name: categoryPath(localizedCategories, category.id), _count: { products: categories.filter((item) => descendants.has(item.id)).reduce((sum, item) => sum + item._count.products, 0) } };
+    }).filter((category) => category._count.products > 0),
     brands: brands.filter((brand) => brand._count.products > 0).map(localizeBrand),
     colors: colorGroupKeys.filter((key) => colors.some((item) => item.colorGroup === key)),
     sizes: sizeGroupKeys.filter((key) => sizes.some((item) => item.sizeGroup === key)),
@@ -459,7 +472,7 @@ async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, 
   };
 }
 
-const getCatalogFiltersForSearchCached = unstable_cache(getCatalogFiltersForSearchUncached, ["catalog-filters-v2-roly-catalog"], {
+const getCatalogFiltersForSearchCached = unstable_cache(getCatalogFiltersForSearchUncached, ["catalog-filters-v3-category-tree"], {
   revalidate: CATALOG_CACHE_SECONDS,
   tags: ["catalog"],
 });
@@ -523,8 +536,20 @@ export async function getProductBySlug(slug: string, locale: Locale = defaultLoc
 
   if (!product) return null;
 
+  const categoryTree = product.category ? await prisma.category.findMany({ include: { translations: { where: { locale }, take: 1 } } }) : [];
+  const categoryAncestors = [];
+  let parentId = product.category?.parentId;
+  const seen = new Set<string>();
+  while (parentId && !seen.has(parentId)) {
+    seen.add(parentId);
+    const parent = categoryTree.find((category) => category.id === parentId);
+    if (!parent) break;
+    categoryAncestors.unshift(localizeCategory(parent));
+    parentId = parent.parentId;
+  }
   return {
     ...localizeProduct(product),
+    categoryAncestors,
     attributeValues: product.attributeValues.map((item) => ({
       ...item,
       attributeValue: {

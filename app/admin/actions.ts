@@ -8,6 +8,8 @@ import { sendAccountApprovedEmail } from "@/lib/email/account-emails";
 import { saveLocalUpload } from "@/lib/uploads/storage";
 import { centsToEuros, eurosToCents, formNumber, formString, slugify } from "@/lib/admin/utils";
 import { inferProductCatalogGroups } from "@/lib/catalog/product-catalog-groups";
+import { categoryCatalogGroup, categoryDescendants } from "@/lib/catalog/category-tree";
+import { catalogGroupKeys, type CatalogGroupKey } from "@/lib/catalog/catalog-groups";
 
 function revalidateCatalog() {
   revalidateTag("catalog", "max");
@@ -98,6 +100,7 @@ async function syncProductCatalogGroups(productId: string) {
       id: true,
       name: true,
       description: true,
+      categoryId: true,
       category: { select: { name: true, slug: true } },
       brand: { select: { name: true, slug: true } },
     },
@@ -105,7 +108,9 @@ async function syncProductCatalogGroups(productId: string) {
 
   if (!product) return;
 
-  const groups = inferProductCatalogGroups(product);
+  const categories = await prisma.category.findMany();
+  const manualGroup = categoryCatalogGroup(categories, product.categoryId);
+  const groups = manualGroup ? [manualGroup] : inferProductCatalogGroups(product);
   await prisma.$transaction([
     prisma.productCatalogGroup.deleteMany({ where: { productId } }),
     ...(groups.length
@@ -125,13 +130,16 @@ async function syncAllProductCatalogGroups() {
       id: true,
       name: true,
       description: true,
+      categoryId: true,
       category: { select: { name: true, slug: true } },
       brand: { select: { name: true, slug: true } },
     },
   });
 
+  const categories = await prisma.category.findMany();
   for (const product of products) {
-    const groups = inferProductCatalogGroups(product);
+    const manualGroup = categoryCatalogGroup(categories, product.categoryId);
+    const groups = manualGroup ? [manualGroup] : inferProductCatalogGroups(product);
     await prisma.$transaction([
       prisma.productCatalogGroup.deleteMany({ where: { productId: product.id } }),
       ...(groups.length
@@ -357,33 +365,62 @@ export async function deleteProductImage(formData: FormData) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
-export async function saveCategory(formData: FormData) {
+export type CategoryFormState = { ok: boolean; message: string };
+
+async function syncCategoryProducts(categoryIds: string[]) {
+  const categories = await prisma.category.findMany();
+  const products = await prisma.product.findMany({
+    where: { categoryId: { in: categoryIds } },
+    include: { category: true, brand: true },
+  });
+  const rows = products.flatMap((product) => {
+    const manual = categoryCatalogGroup(categories, product.categoryId);
+    return (manual ? [manual] : inferProductCatalogGroups(product)).map((group) => ({ productId: product.id, group }));
+  });
+  await prisma.$transaction([
+    prisma.productCatalogGroup.deleteMany({ where: { productId: { in: products.map((product) => product.id) } } }),
+    prisma.productCatalogGroup.createMany({ data: rows, skipDuplicates: true }),
+  ]);
+}
+
+export async function saveCategoryState(_previous: CategoryFormState, formData: FormData): Promise<CategoryFormState> {
   await requireAdmin();
   const id = formString(formData, "id");
   const name = formString(formData, "name");
   const slug = formString(formData, "slug") || slugify(name);
   const parentId = formString(formData, "parentId") || null;
+  const catalogGroup = formString(formData, "catalogGroup") || null;
   const description = formString(formData, "description") || null;
-
-  if (!name || !slug) throw new Error("Nombre y slug son obligatorios.");
-
-  if (id) {
-    await prisma.category.update({ where: { id }, data: { name, slug, parentId, description } });
-  } else {
-    await prisma.category.create({ data: { name, slug, parentId, description } });
+  if (!name || !slug) return { ok: false, message: "Nombre y slug son obligatorios." };
+  if (catalogGroup && !catalogGroupKeys.includes(catalogGroup as CatalogGroupKey)) return { ok: false, message: "Selecciona un catálogo válido." };
+  const categories = await prisma.category.findMany();
+  if (parentId && !categories.some((category) => category.id === parentId)) return { ok: false, message: "La categoría padre ya no existe." };
+  if (id && (!categories.some((category) => category.id === id) || (parentId && categoryDescendants(categories, id).has(parentId)))) {
+    return { ok: false, message: "No puedes usar la propia categoría ni una de sus subcategorías como padre." };
   }
-
-  await syncAllProductCatalogGroups();
+  if (categories.some((category) => category.slug === slug && category.id !== id)) return { ok: false, message: "Ya existe una categoría con este slug. Usa otro." };
+  const category = id
+    ? await prisma.category.update({ where: { id }, data: { name, slug, parentId, catalogGroup, description } })
+    : await prisma.category.create({ data: { name, slug, parentId, catalogGroup, description } });
+  const updated = await prisma.category.findMany();
+  await syncCategoryProducts([...categoryDescendants(updated, category.id)]);
   revalidateCatalog();
-  revalidatePath("/admin/categories");
+  revalidatePath("/product/[slug]", "page");
+  revalidatePath("/admin/categories", "layout");
+  revalidatePath("/admin/products", "layout");
+  return { ok: true, message: "Categoría guardada. El catálogo de sus productos se ha actualizado." };
 }
 
-export async function deleteCategory(formData: FormData) {
+export async function deleteCategoryState(_previous: CategoryFormState, formData: FormData): Promise<CategoryFormState> {
   await requireAdmin();
-  await prisma.category.delete({ where: { id: formString(formData, "id") } });
-  await syncAllProductCatalogGroups();
+  const id = formString(formData, "id");
+  const category = await prisma.category.findUnique({ where: { id }, include: { _count: { select: { products: true, children: true } } } });
+  if (!category) return { ok: false, message: "La categoría ya no existe." };
+  if (category._count.products || category._count.children) return { ok: false, message: "Reasigna sus productos y subcategorías antes de eliminarla." };
+  await prisma.category.delete({ where: { id } });
   revalidateCatalog();
   revalidatePath("/admin/categories");
+  return { ok: true, message: "Categoría eliminada." };
 }
 
 export async function saveBrand(formData: FormData) {

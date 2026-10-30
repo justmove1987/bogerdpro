@@ -19,7 +19,7 @@ export default async function ProductEditPage({ params }: ProductEditPageProps) 
         variants: { orderBy: { createdAt: "asc" } },
       },
     }),
-    prisma.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, parentId: true } }),
     prisma.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 

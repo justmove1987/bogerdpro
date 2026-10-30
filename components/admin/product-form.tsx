@@ -1,9 +1,10 @@
+import { categoryPath } from "@/lib/catalog/category-tree";
 import { deleteProductImage, saveProduct, updateProductImage } from "@/app/admin/actions";
 import { ProductImageForm } from "@/components/admin/product-image-form";
 import { VariantForm } from "@/components/admin/variant-form";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
-type CategoryOption = { id: string; name: string };
+type CategoryOption = { id: string; name: string; parentId: string | null };
 type BrandOption = { id: string; name: string };
 
 type ProductFormProduct = {
@@ -77,7 +78,7 @@ export function ProductForm({
             <select className={inputClass} name="categoryId" defaultValue={product?.categoryId ?? ""}>
               <option value="">Sin categoría</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
+                <option key={category.id} value={category.id}>{categoryPath(categories, category.id)}</option>
               ))}
             </select>
           </Field>

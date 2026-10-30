@@ -204,6 +204,12 @@ export function CatalogFilters({
             ))}
           </FilterGroup>
 
+          <FilterGroup title={labels.category} count={selectedCount(selected.category)}>
+            <div className="max-h-72 overflow-y-auto">{filters.categories.map((category) => (
+              <CheckboxFilter key={category.id} name="category" value={category.slug} label={category.name} count={category._count.products} checked={isSelected(selected.category, category.slug)} />
+            ))}</div>
+          </FilterGroup>
+
           <FilterGroup title={labels.brand} count={selectedCount(selected.brand)}>
             {filters.brands.map((brand) => (
               <CheckboxFilter

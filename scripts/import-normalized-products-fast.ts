@@ -1,3 +1,4 @@
+import { categoryCatalogGroup } from "../lib/catalog/category-tree";
 import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -66,7 +67,7 @@ async function getOrCreateCategoryId(categoryName: string | null, subcategoryNam
   const parent = categoryName
     ? await prisma.category.upsert({
         where: { slug: slugify(categoryName) },
-        update: { name: categoryName },
+        update: {},
         create: { name: categoryName, slug: slugify(categoryName) },
         select: { id: true },
       })
@@ -79,7 +80,7 @@ async function getOrCreateCategoryId(categoryName: string | null, subcategoryNam
 
   const category = await prisma.category.upsert({
     where: { slug: slugify(subcategoryName) },
-    update: { name: subcategoryName, parentId: parent?.id ?? null },
+    update: {},
     create: { name: subcategoryName, slug: slugify(subcategoryName), parentId: parent?.id ?? null },
     select: { id: true },
   });
@@ -159,7 +160,9 @@ async function importProduct(item: NormalizedProduct) {
       skipDuplicates: true,
     });
 
-    const groups = inferProductCatalogGroups({
+    const categories = await tx.category.findMany();
+    const manual = categoryCatalogGroup(categories, categoryId);
+    const groups = manual ? [manual] : inferProductCatalogGroups({
       name: item.name,
       description: item.description,
       category: { name: item.subcategory ?? item.category },

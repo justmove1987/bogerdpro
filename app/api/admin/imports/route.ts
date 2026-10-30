@@ -1,3 +1,4 @@
+import { categoryCatalogGroup } from "@/lib/catalog/category-tree";
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { ProductStatus } from "@/generated/prisma/enums";
@@ -112,6 +113,7 @@ async function syncProductCatalogGroups(productId: string) {
       id: true,
       name: true,
       description: true,
+      categoryId: true,
       category: { select: { name: true, slug: true } },
       brand: { select: { name: true, slug: true } },
     },
@@ -119,7 +121,9 @@ async function syncProductCatalogGroups(productId: string) {
 
   if (!product) return;
 
-  const groups = inferProductCatalogGroups(product);
+  const categories = await prisma.category.findMany();
+  const manual = categoryCatalogGroup(categories, product.categoryId);
+  const groups = manual ? [manual] : inferProductCatalogGroups(product);
   await prisma.$transaction([
     prisma.productCatalogGroup.deleteMany({ where: { productId } }),
     ...(groups.length
@@ -136,11 +140,13 @@ async function syncProductCatalogGroups(productId: string) {
 async function importProduct(row: ProductImportRow, rowNumber: number) {
   const existingProduct = await prisma.product.findUnique({
     where: { sku: row.sku },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, categoryId: true },
   });
 
   const brand = await getOrCreateBrand(row.brand);
   const category = await getOrCreateCategory(row.category, row.subcategory);
+  const categoryTree = await prisma.category.findMany();
+  const preserveCategory = existingProduct && categoryCatalogGroup(categoryTree, existingProduct.categoryId);
   const productSlug = existingProduct?.slug ?? (await uniqueSlug(row.name, "product"));
   const status = row.isActive ? ProductStatus.ACTIVE : ProductStatus.INACTIVE;
   const attributes = parseAttributes(row.attributes);
@@ -153,7 +159,7 @@ async function importProduct(row: ProductImportRow, rowNumber: number) {
           description: row.description ?? null,
           status,
           isActive: row.isActive,
-          categoryId: category?.id ?? null,
+          categoryId: preserveCategory ? existingProduct.categoryId : category?.id ?? null,
           brandId: brand?.id ?? null,
           minPriceCents: row.priceCents,
           maxPriceCents: row.priceCents,

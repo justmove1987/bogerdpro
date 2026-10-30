@@ -53,7 +53,7 @@ async function getOrCreateCategory(categoryName: string | null, subcategoryName:
   const parent = categoryName
     ? await prisma.category.upsert({
         where: { slug: slugify(categoryName) },
-        update: { name: categoryName },
+        update: {},
         create: { name: categoryName, slug: slugify(categoryName) },
       })
     : null;
@@ -64,7 +64,7 @@ async function getOrCreateCategory(categoryName: string | null, subcategoryName:
 
   return prisma.category.upsert({
     where: { slug: slugify(subcategoryName) },
-    update: { name: subcategoryName, parentId: parent?.id ?? null },
+    update: {},
     create: { name: subcategoryName, slug: slugify(subcategoryName), parentId: parent?.id ?? null },
   });
 }
