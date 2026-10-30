@@ -165,6 +165,7 @@ async function importProduct(item: NormalizedProduct) {
     const groups = manual ? [manual] : inferProductCatalogGroups({
       name: item.name,
       description: item.description,
+      specifications: item.specifications,
       category: { name: item.subcategory ?? item.category },
       brand: { name: item.brand },
     });

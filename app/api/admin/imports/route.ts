@@ -113,6 +113,7 @@ async function syncProductCatalogGroups(productId: string) {
       id: true,
       name: true,
       description: true,
+      specifications: true,
       categoryId: true,
       category: { select: { name: true, slug: true } },
       brand: { select: { name: true, slug: true } },

@@ -340,7 +340,7 @@ async function getCatalogProductsUncached(filters: CatalogSearchParams, locale: 
   };
 }
 
-const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v5-category-tree"], {
+const getCatalogProductsCached = unstable_cache(getCatalogProductsUncached, ["catalog-products-v6-sector-rules"], {
   revalidate: CATALOG_CACHE_SECONDS,
   tags: ["catalog"],
 });
@@ -472,7 +472,7 @@ async function getCatalogFiltersForSearchUncached(filters: CatalogSearchParams, 
   };
 }
 
-const getCatalogFiltersForSearchCached = unstable_cache(getCatalogFiltersForSearchUncached, ["catalog-filters-v3-category-tree"], {
+const getCatalogFiltersForSearchCached = unstable_cache(getCatalogFiltersForSearchUncached, ["catalog-filters-v4-sector-rules"], {
   revalidate: CATALOG_CACHE_SECONDS,
   tags: ["catalog"],
 });
